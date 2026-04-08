@@ -1,50 +1,70 @@
-# SaaS Textile ERP (Muhasebe & Stok Takip)
+# SaaS Textile ERP (Muhasebe & Stok Takip) - v2.0
 
 Bu proje, tekstil sektörüne yönelik modern, ölçeklenebilir ve profesyonel bir SaaS ("Software as a Service") çözümüdür. Katmanlı mimari (Clean Architecture), "Offline-first" yaklaşımı ve kapsamlı Multi-tenancy desteği barındırmaktadır.
 
-## Mimarisi ve Teknoloji Yığını
+### ✨ Öne Çıkan Özellikler
 
-- **Veritabanı ve Auth**: Supabase (PostgreSQL), Supabase Auth.
-- **Tip Güvenliği**: TypeScript (Uçtan uça `database.types.ts` ile %100 Typed).
-- **Offline-First Storage**: Dexie.js (IndexedDB).
-- **Backend Lock / Atomicity**: PostgreSQL RPC (Remote Procedure Call), PL/pgSQL Triggers & Functions.
-- **Tasarım Kalıpları**: Service Pattern, SOLID Prensibi.
+- **Multi-Tenant (Çok Kiracılı) Yapı**: Supabase Row Level Security (RLS) ile veritabanı seviyesinde tam izolasyon.
+- **Offline-First**: Dexie.js (IndexedDB) ile internet olmasa dahi satış ve stok işlemlerine devam edebilme.
+- **Dinamik Temalandırma**: Sayfa bazlı otomatik renk geçişleri (Contextual Theming).
+- **Proses Otomasyonu**: Stok düşüşleri ve hareketleri PostgreSQL Trigger'ları ile otonom olarak yönetilir.
+- **Gelişmiş Raporlama**: Günlük ciro, kar/zarar ve kritik stok seviyeleri için hazır Analytics View'lar.
 
-## Çekirdek Özellikler
+---
 
-### 1. Multi-Tenant (Çok Kiracılı) Yapı ve RLS
-Her müşteri (şirket) kendi `shop_id` değerine sahiptir. Supabase üzerinde etkinleştirilen güçlü **Row Level Security (RLS)** politikaları sayesinde, her mağaza yetkilisi sadece kendi mağazasının ürününü, stoklarını ve raporlarını görebilir. Güvenlik ve veri izolasyonu PostgreSQL sunucusu katmanında (veritabanının kendisinde) sağlanır.
+## 🚀 Teknoloji yığını
 
-### 2. Kesintisiz Deneyim: Offline-First
-Ağ kopukluklarına karşı (Sahada, fuarlarda veya yavaş internet ortamlarında) sistem hiçbir zaman durmaz:
-- Tüm işlemler (Satış, Stok Ekleme) IndexedDB (Dexie) kullanılarak **optimistic (peşinen)** yerelde (UUID'ler atanarak) tamamlanır ve arayüze anında yansır.
-- İnternet yoksa, istekler arkaplanda "Sync Queue (Senkronizasyon Kuyruğu)" olarak tutulur. 
-- Cihaz online (internete bağlı) olduğu an tetiklenen *Sync Engine Hook* kuyruktaki işlemleri sırayla Supabase üzerine (Atomic RPC'lerle) aktarır.
+- **Frontend**: React 18, Vite, TypeScript
+- **Styling**: Tailwind CSS (Modern & Premium Design)
+- **Backend/Database**: Supabase (PostgreSQL), RPC, PL/pgSQL
+- **Local Storage**: Dexie.js (IndexedDB)
+- **Icons & UI**: Lucide React, Framer Motion
 
-### 3. Otomatik Stok Düşüşü (Event-Driven Triggers)
-Ürün stok takibinde insan hatası faktörünü kaldırdık:
-Bir satış tamamlandığında (`sale_items` tablosuna INSERT yapıldığnda), PostgreSQL içerisindeki `after insert` trigger kendi kendine `stock_movements` tablosuna bir 'OUT' (Stok Çıkışı) hareketi yazar. O da ilgili varyantın `stock_quantity` alanını otomatik günceller.
-(Ayrıca `stock_quantity` alanına manuel müdahaleyi reddeden özel bir `pg_trigger_depth` koruması da kullanılmıştır.)
+---
 
-### 4. Analytic Views (Sanal Tablolar)
-Çok yüksek işlem veya okuma hacminde Frontend'in donmaması adına; **Günlük Kar/Zarar Özeti**, **Çok Satanlar** ve **Kritik Stoklar** sorguları doğrudan SQL `VIEW` mimarisi kullanarak tek satır veri gibi alınmaktadır. `analyticsService.ts` üzerinden n8n Webhook gibi dış entegrasyonlar tetiklenebilir.
+## 🛠️ Kurulum
 
-## Kurulum ve Başlangıç
+1. **Repoyu Klonlayın**:
+   ```bash
+   git clone https://github.com/yigitYur650/Stok-Takip-Otomasyonu-v2.0.git
+   cd Stok-Takip-Otomasyonu-v2.0
+   ```
 
-1. Kod tabanını klonlayın.
-2. `supabase/migrations/` içindeki 5 SQL dosyasını kendi Supabase Studio konsolunuzdan uygulayarak veritabanı haritasını çıkartın.
-3. `.env.example` dosyasını kullanarak `.env` (veya `.env.local`) oluşturun:
-```env
-NEXT_PUBLIC_SUPABASE_URL="https://xxx.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="ey..."
-```
-4. Gerekli kütüphaneleri (Dexie, UUID, Supabase-js, React vb.) kurun:
-```bash
-npm install
-npm run dev
-```
+2. **Bağımlılıkları Kurun**:
+   ```bash
+   npm install
+   ```
 
-## Ölçeklenebilirlik (Scalability)
-Bu mimari **binlerce şirket (tenant) ve on binlerce ürünü** aynı anda kusursuz çalıştırabilir.
-- Join ve aggregations işlemleri Frontend veya Backend Node.JS sunucusunda değil, doğrudan C ile çalıştırılan güçlü PostgreSQL mantığında hesaplanır.
-- I/O bekleme süresine karşı "Offline Dexie Queue" sayesinde satıcıların sistemi beklemesine gerek yoktur.
+3. **Çevre Değişkenlerini Ayarlayın**:
+   `.env.example` dosyasını `.env` olarak kopyalayın ve kendi Supabase bilgilerinizi girin.
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Veritabanı Şeması**:
+   `supabase/migrations/full_production_schema.sql` dosyasını Supabase SQL Editor üzerinden çalıştırın.
+
+5. **Uygulamayı Başlatın**:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## 🏗️ Mimari Yapı
+
+Proje **Solid** prensiplerine ve **Service Pattern** yapısına uygun olarak geliştirilmiştir:
+- `src/services`: İş mantığının ve veritabanı erişiminin soyutlandığı katman.
+- `src/context`: Kimlik doğrulama ve ana veri yönetimi için global state yönetimi.
+- `src/layout`: Dinamik sidebar ve navigasyon yapısı.
+
+---
+
+## 🔐 Güvenlik Uyarıları
+- Bu proje **Supabase RLS** politikaları ile korunmaktadır.
+- `.env` dosyanızı asla GitHub'a yüklemeyin ( `.gitignore` dosyası bu projede hazır olarak gelmektedir).
+
+---
+
+## 📄 Lisans
+Bu proje özel mülkiyet niteliğindedir. İzinsiz kopyalanamaz ve dağıtılamaz.
