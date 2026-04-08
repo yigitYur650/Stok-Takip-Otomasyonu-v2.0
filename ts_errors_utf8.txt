@@ -1,0 +1,5 @@
+﻿src/services/categoryService.ts(45,15): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/services/productService.ts(66,15): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/services/productService.ts(122,15): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/services/saleService.ts(44,71): error TS2345: Argument of type '{ payload: any; }' is not assignable to parameter of type 'undefined'.
+src/services/saleService.ts(89,67): error TS2345: Argument of type '{ payload: any; }' is not assignable to parameter of type 'undefined'.
