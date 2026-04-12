@@ -10,13 +10,24 @@ type VariantRow = Database['public']['Tables']['product_variants']['Row'];
 type VariantInsert = Database['public']['Tables']['product_variants']['Insert'];
 type VariantUpdate = Database['public']['Tables']['product_variants']['Update'];
 
+// --- JOIN Tipleri ---
+export interface JoinedVariant extends VariantRow {
+  colors: { name: string } | null;
+  sizes: { name: string } | null;
+}
+
+export interface JoinedProduct extends ProductRow {
+  product_variants: JoinedVariant[];
+  categories: { id: string; name: string } | null;
+}
+
 export class ProductService implements IProductService {
   constructor(private supabase: SupabaseClient<Database>) {}
 
   /**
    * Ürünleri ve onlara bağlı varyantları (ve kategori bilgilerini) getirir. (Deep Join)
    */
-  async getProductsWithVariants() {
+  async getProductsWithVariants(): Promise<JoinedProduct[]> {
     const { data, error } = await this.supabase
       .from('products')
       .select(`
@@ -27,7 +38,7 @@ export class ProductService implements IProductService {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data;
+    return (data as unknown) as JoinedProduct[];
   }
 
   /**
@@ -40,16 +51,23 @@ export class ProductService implements IProductService {
       .order('created_at', { ascending: false });
       
     if (error) throw error;
-    return data;
+    return data || [];
   }
 
   /**
-   * Yeni bir ürün oluşturur.
+   * Yeni bir ürün oluşturur (Clean Payload/DTO).
    */
   async createProduct(product: ProductInsert): Promise<ProductRow> {
+    const payload: ProductInsert = {
+      name: product.name,
+      description: product.description,
+      category_id: product.category_id,
+      shop_id: product.shop_id
+    };
+
     const { data, error } = await this.supabase
       .from('products')
-      .insert(product as any)
+      .insert(payload)
       .select()
       .single();
       
@@ -58,13 +76,18 @@ export class ProductService implements IProductService {
   }
 
   /**
-   * Ürünü günceller.
+   * Ürünü günceller (Clean Payload/DTO - Sadece tanımlı alanlar).
    */
   async updateProduct(id: string, product: ProductUpdate): Promise<ProductRow> {
+    const payload: ProductUpdate = {};
+    if (product.name !== undefined) payload.name = product.name;
+    if (product.description !== undefined) payload.description = product.description;
+    if (product.category_id !== undefined) payload.category_id = product.category_id;
+    if (product.shop_id !== undefined) payload.shop_id = product.shop_id;
+
     const { data, error } = await this.supabase
       .from('products')
-      // @ts-ignore
-      .update(product as any)
+      .update(payload)
       .eq('id', id)
       .select()
       .single();
@@ -74,15 +97,30 @@ export class ProductService implements IProductService {
   }
 
   /**
-   * Ürünü siler. Bağlı varyantlar da ON DELETE CASCADE ile silinecektir.
+   * Ürünü siler (Soft Delete). 
+   * Güvenlik Kontrolü: İçinde aktif (silinmemiş) varyantı olan ürünler silinemez.
    */
   async deleteProduct(id: string): Promise<void> {
-    const { error } = await this.supabase
+    // 1. Önce bu ürüne ait aktif varyantları sayıyoruz
+    const { count, error: countError } = await this.supabase
+      .from('product_variants')
+      .select('*', { count: 'exact', head: true })
+      .eq('product_id', id)
+      .is('deleted_at', null);
+
+    if (countError) throw countError;
+
+    if (count !== null && count > 0) {
+      throw new Error("Bu ürüne ait aktif varyantlar bulunmaktadır. Lütfen silmeden önce varyantları çöp kutusuna taşıyın.");
+    }
+
+    // 2. Eğer aktif varyant yoksa, ürünü silmeyip deleted_at alanını güncelliyoruz (Soft Delete)
+    const { error: deleteError } = await this.supabase
       .from('products')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() } as any)
       .eq('id', id);
       
-    if (error) throw error;
+    if (deleteError) throw deleteError;
   }
 
   // --- VARIANT METOTLARI ---
@@ -97,16 +135,26 @@ export class ProductService implements IProductService {
       .eq('product_id', productId);
 
     if (error) throw error;
-    return data;
+    return data || [];
   }
 
   /**
-   * Yeni bir ürün varyantı oluşturur.
+   * Yeni bir ürün varyantı oluşturur (Clean Payload/DTO).
    */
   async createVariant(variant: VariantInsert): Promise<VariantRow> {
+    const payload: VariantInsert = {
+      product_id: variant.product_id,
+      sku: variant.sku,
+      color: variant.color,
+      size: variant.size,
+      stock_quantity: variant.stock_quantity,
+      wholesale_price: variant.wholesale_price,
+      retail_price: variant.retail_price
+    };
+
     const { data, error } = await this.supabase
       .from('product_variants')
-      .insert(variant as any)
+      .insert(payload)
       .select()
       .single();
 
@@ -115,13 +163,20 @@ export class ProductService implements IProductService {
   }
 
   /**
-   * Varyant bilgisini günceller.
+   * Varyant bilgisini günceller (Clean Payload/DTO - Sadece tanımlı alanlar).
    */
   async updateVariant(id: string, variant: VariantUpdate): Promise<VariantRow> {
+    const payload: VariantUpdate = {};
+    if (variant.sku !== undefined) payload.sku = variant.sku;
+    if (variant.color !== undefined) payload.color = variant.color;
+    if (variant.size !== undefined) payload.size = variant.size;
+    if (variant.stock_quantity !== undefined) payload.stock_quantity = variant.stock_quantity;
+    if (variant.wholesale_price !== undefined) payload.wholesale_price = variant.wholesale_price;
+    if (variant.retail_price !== undefined) payload.retail_price = variant.retail_price;
+
     const { data, error } = await this.supabase
       .from('product_variants')
-      // @ts-ignore
-      .update(variant as any)
+      .update(payload)
       .eq('id', id)
       .select()
       .single();
@@ -131,26 +186,29 @@ export class ProductService implements IProductService {
   }
 
   /**
-   * Varyantı siler.
+   * Varyantı siler (Soft Delete).
    */
   async deleteVariant(id: string): Promise<void> {
     const { error } = await this.supabase
       .from('product_variants')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() } as any)
       .eq('id', id);
 
     if (error) throw error;
   }
 
-  async smartSearch(query: string): Promise<any[]> {
+  /**
+   * Akıllı arama işlemi (Join verilere göre).
+   */
+  async smartSearch(query: string): Promise<JoinedProduct[]> {
     const products = await this.getProductsWithVariants();
     if (!query) return products;
     const lq = query.toLowerCase();
     
-    return products.filter((p: any) => 
+    return products.filter((p: JoinedProduct) => 
       p.name?.toLowerCase().includes(lq) || 
       p.categories?.name?.toLowerCase().includes(lq) ||
-      p.product_variants?.some((v: any) => 
+      p.product_variants?.some((v: JoinedVariant) => 
         v.colors?.name?.toLowerCase().includes(lq) || 
         v.sizes?.name?.toLowerCase().includes(lq) ||
         v.sku?.toLowerCase().includes(lq)

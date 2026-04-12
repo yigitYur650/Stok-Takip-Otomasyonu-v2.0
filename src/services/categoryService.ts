@@ -16,19 +16,40 @@ export class CategoryService implements ICategoryService {
     const { data, error } = await this.supabase
       .from('categories')
       .select('*')
+      .is('deleted_at', null)
       .order('name');
       
     if (error) throw error;
-    return data;
+    return data || [];
   }
 
   /**
-   * Yeni bir kategori oluşturur.
+   * Silinmiş (Çöp kutusundaki) kategorileri getirir.
    */
-  async createCategory(category: CategoryInsert): Promise<CategoryRow> {
+  async getDeletedCategories(): Promise<CategoryRow[]> {
     const { data, error } = await this.supabase
       .from('categories')
-      .insert(category as any)
+      .select('*')
+      .not('deleted_at', 'is', null)
+      .order('deleted_at', { ascending: false });
+      
+    if (error) throw error;
+    return data || [];
+  }
+
+  /**
+   * Yeni bir kategori oluşturur (Clean Payload/DTO).
+   */
+  async createCategory(category: CategoryInsert): Promise<CategoryRow> {
+    const payload: CategoryInsert = {
+      name: category.name,
+      shop_id: category.shop_id,
+      parent_id: category.parent_id
+    };
+
+    const { data, error } = await this.supabase
+      .from('categories')
+      .insert(payload)
       .select()
       .single();
       
@@ -37,13 +58,17 @@ export class CategoryService implements ICategoryService {
   }
 
   /**
-   * Kategoriyi günceller.
+   * Kategoriyi günceller (Clean Payload/DTO - Sadece tanımlı alanlar).
    */
   async updateCategory(id: string, category: CategoryUpdate): Promise<CategoryRow> {
+    const payload: CategoryUpdate = {};
+    if (category.name !== undefined) payload.name = category.name;
+    if (category.parent_id !== undefined) payload.parent_id = category.parent_id;
+    if (category.shop_id !== undefined) payload.shop_id = category.shop_id;
+
     const { data, error } = await this.supabase
       .from('categories')
-      // @ts-ignore
-      .update(category as any)
+      .update(payload)
       .eq('id', id)
       .select()
       .single();
@@ -53,9 +78,33 @@ export class CategoryService implements ICategoryService {
   }
 
   /**
-   * Kategoriyi siler.
+   * Kategoriyi yumuşak silme (Soft Delete) ile işaretler.
    */
-  async deleteCategory(id: string): Promise<void> {
+  async softDeleteCategory(id: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('categories')
+      .update({ deleted_at: new Date().toISOString() } as any)
+      .eq('id', id);
+      
+    if (error) throw error;
+  }
+
+  /**
+   * Silinmiş kategoriyi geri yükler.
+   */
+  async restoreCategory(id: string): Promise<void> {
+    const { error } = await this.supabase
+      .from('categories')
+      .update({ deleted_at: null } as any)
+      .eq('id', id);
+      
+    if (error) throw error;
+  }
+
+  /**
+   * Kategoriyi kalıcı olarak siler.
+   */
+  async permanentDeleteCategory(id: string): Promise<void> {
     const { error } = await this.supabase
       .from('categories')
       .delete()

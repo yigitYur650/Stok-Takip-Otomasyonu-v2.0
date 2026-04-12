@@ -25,7 +25,7 @@ export function MasterDataProvider({ children }: { children: React.ReactNode }) 
     try {
       setLoading(true);
       const [cats, cols, szs] = await Promise.all([
-        supabase.from('categories').select('*').eq('shop_id', profile.shop_id).order('name'),
+        supabase.from('categories').select('*').eq('shop_id', profile.shop_id).is('deleted_at', null).order('name'),
         supabase.from('colors').select('*').eq('shop_id', profile.shop_id).order('name'),
         supabase.from('sizes').select('*').eq('shop_id', profile.shop_id).order('name')
       ]);

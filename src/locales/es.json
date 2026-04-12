@@ -1,0 +1,15 @@
+{
+  "menu": {
+    "dashboard": "Tablero",
+    "inventory": "Inventario",
+    "sales": "Ventas",
+    "reports": "Informes",
+    "admin": "Admin",
+    "signout": "Cerrar sesión",
+    "change_password": "Cambiar contraseña"
+  },
+  "common": {
+    "welcome": "Bienvenido",
+    "loading": "Cargando..."
+  }
+}

@@ -5,6 +5,7 @@ import { PageTransition } from '../components/PageTransition';
 import { Package, Plus, Trash2, Edit3, Folders, Filter, X, ArrowUpRight, ArrowDownRight, History, Activity } from 'lucide-react';
 import { SlideOver } from '../components/SlideOver';
 import { ProductForm } from '../components/ProductForm';
+import { CategoryManager } from '../components/CategoryManager';
 import { SkeletonCard } from '../components/Skeleton';
 import { useMasterData } from '../context/MasterDataContext';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +26,8 @@ export function Inventory() {
   
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
+  
+  const [isCategoryManagerOpen, setIsCategoryManagerOpen] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -83,12 +86,12 @@ export function Inventory() {
 
   const handleDelete = async (id: string) => {
     if (profile?.role !== 3) return alert("Silme yetkiniz yok.");
-    if (confirm("Bu ürün ve tüm varyantları silinecektir. Emin misiniz?")) {
+    if (confirm("Bu ürün silinecektir. Emin misiniz?")) {
       try {
         await productService.deleteProduct(id);
         triggerRefresh();
-      } catch(err) {
-        alert("Silinirken hata oluştu");
+      } catch(err: any) {
+        alert(err.message || "Silinirken hata oluştu");
       }
     }
   };
@@ -115,12 +118,20 @@ export function Inventory() {
         </div>
         
         {profile?.role === 3 && (
-          <button 
-            onClick={() => { setEditingProduct(null); setIsProductFormOpen(true); }}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-bold text-sm transition-all shadow-xl shadow-indigo-200 group"
-          >
-            <Plus size={18} /> Yeni Ürün Tanımla
-          </button>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setIsCategoryManagerOpen(true)}
+              className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-2xl font-bold text-sm transition-all border border-slate-200 shadow-sm"
+            >
+              <Folders size={18} className="text-indigo-600" /> Kategorileri Yönet
+            </button>
+            <button 
+              onClick={() => { setEditingProduct(null); setIsProductFormOpen(true); }}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-bold text-sm transition-all shadow-xl shadow-indigo-200 group"
+            >
+              <Plus size={18} /> Yeni Ürün Tanımla
+            </button>
+          </div>
         )}
       </div>
 
@@ -244,6 +255,15 @@ export function Inventory() {
           onClose={handleCloseForm} 
           initialData={editingProduct}
         />
+      </SlideOver>
+
+      {/* SlideOver: Category Management */}
+      <SlideOver
+        isOpen={isCategoryManagerOpen}
+        onClose={() => setIsCategoryManagerOpen(false)}
+        title="Kategori Yönetimi"
+      >
+        <CategoryManager />
       </SlideOver>
 
       {/* Modal: Stock Movement */}

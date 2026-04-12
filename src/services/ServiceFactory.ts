@@ -17,7 +17,7 @@ export interface AppServices {
   analyticsService: IAnalyticsService;
 }
 
-export function getServices(supabaseClient: SupabaseClient<Database>): AppServices {
+export function getServices(supabaseClient: SupabaseClient<Database, 'public'>): AppServices {
   // Mock servisler VITE_APP_MODE ne olursa olsun DEVRE DISI birakilmistir.
   // 100% Supabase Production servislere gecis tamamladi.
   return {

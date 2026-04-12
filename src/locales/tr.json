@@ -1,0 +1,15 @@
+{
+  "menu": {
+    "dashboard": "Dashboard",
+    "inventory": "Envanter",
+    "sales": "Satışlar",
+    "reports": "Raporlar",
+    "admin": "Admin Paneli",
+    "signout": "Çıkış Yap",
+    "change_password": "Şifre Değiştir"
+  },
+  "common": {
+    "welcome": "Hoş Geldiniz",
+    "loading": "Yükleniyor..."
+  }
+}

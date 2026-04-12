@@ -20,31 +20,45 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
   const [loading, setLoading] = useState(false);
   
   // Ana Ürün State
-  const [categoryId, setCategoryId] = useState(initialData?.category_id || '');
-  const [description, setDescription] = useState(initialData?.description || '');
+  const [categoryId, setCategoryId] = useState('');
+  const [description, setDescription] = useState('');
   
   // Varyant State (Array)
-  const [variants, setVariants] = useState<any[]>(
-    initialData?.product_variants?.map((v: any) => ({
-      id: v.id,
-      color_id: v.color_id,
-      size_id: v.size_id,
-      sku: v.sku || '',
-      retail_price: v.retail_price,
-      stock_quantity: v.stock_quantity,
-      low_stock_threshold: v.low_stock_threshold || '', // Yeni eklenen alan
-      isExisting: true
-    })) || [{
-      id: Date.now().toString(),
-      color_id: '',
-      size_id: '',
-      sku: '',
-      retail_price: '',
-      stock_quantity: '',
-      low_stock_threshold: '', // Yeni eklenen alan
-      isExisting: false
-    }]
-  );
+  const [variants, setVariants] = useState<any[]>([]);
+
+  // initialData Senkronizasyonu (Edit/New Modu Geçişi)
+  useEffect(() => {
+    if (initialData) {
+      // DÜZENLEME MODU (Edit)
+      setCategoryId(initialData.category_id || '');
+      setDescription(initialData.description || '');
+      
+      const mappedVariants = initialData.product_variants?.map((v: any) => ({
+        id: v.id,
+        color_id: v.color || v.color_id || '', // Veritabanı şemasına (color) öncelik ver
+        size_id: v.size || v.size_id || '',   // Veritabanı şemasına (size) öncelik ver
+        sku: v.sku || '',
+        retail_price: v.retail_price || '',
+        stock_quantity: v.stock_quantity || '',
+        low_stock_threshold: v.low_stock_threshold || '',
+        isExisting: true
+      })) || [];
+
+      // Eğer varyant yoksa en az bir boş varyant göster (Opsiyonel ama UX için iyi)
+      setVariants(mappedVariants.length > 0 ? mappedVariants : [{
+        id: Date.now().toString(),
+        color_id: '', size_id: '', sku: '', retail_price: '', stock_quantity: '', low_stock_threshold: '', isExisting: false
+      }]);
+    } else {
+      // YENİ EKLEME MODU (Reset)
+      setCategoryId('');
+      setDescription('');
+      setVariants([{
+        id: Date.now().toString(),
+        color_id: '', size_id: '', sku: '', retail_price: '', stock_quantity: '', low_stock_threshold: '', isExisting: false
+      }]);
+    }
+  }, [initialData]);
   
   const handleAddVariant = () => {
     setVariants([...variants, {
@@ -58,9 +72,7 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
   };
 
   const handleRemoveVariant = (id: string) => {
-    if (variants.length > 1) {
-       setVariants(variants.filter(v => v.id !== id));
-    }
+    setVariants(variants.filter(v => v.id !== id));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,8 +134,8 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
 
         const variantPayload: any = {
           product_id: productId,
-          color_id: v.color_id || null, // Boş UUID fix
-          size_id: v.size_id || null,   // Boş UUID fix
+          color: v.color_id || null, // UI state'ten veritabanı kolonuna (color)
+          size: v.size_id || null,   // UI state'ten veritabanı kolonuna (size)
           sku: v.sku?.trim() || null,
           retail_price: retailPriceNum,
           wholesale_price: retailPriceNum * 0.8,
@@ -194,23 +206,23 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
           <div className="space-y-4 relative">
             <div className="absolute top-4 bottom-4 left-[23px] w-0.5 bg-slate-100 -z-10 rounded-full"></div>
             
-            <AnimatePresence>
-              {variants.map((variant, index) => (
-                <motion.div 
-                  key={variant.id}
-                  initial={{ opacity: 0, x: -20, height: 0 }}
-                  animate={{ opacity: 1, x: 0, height: 'auto' }}
-                  exit={{ opacity: 0, x: 20, height: 0 }}
-                  className="relative pl-12"
-                >
-                  <div className="absolute left-[19px] top-6 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-white shadow-sm z-10"></div>
-                  
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm group">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
-                        # {index + 1}
-                      </span>
-                      {variants.length > 1 && (
+            <AnimatePresence mode="popLayout">
+              {variants.length > 0 ? (
+                variants.map((variant, index) => (
+                  <motion.div 
+                    key={variant.id}
+                    initial={{ opacity: 0, x: -20, height: 0 }}
+                    animate={{ opacity: 1, x: 0, height: 'auto' }}
+                    exit={{ opacity: 0, x: 20, height: 0 }}
+                    className="relative pl-12"
+                  >
+                    <div className="absolute left-[19px] top-6 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-white shadow-sm z-10"></div>
+                    
+                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm group">
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
+                          # {index + 1}
+                        </span>
                         <button 
                           type="button" 
                           onClick={() => handleRemoveVariant(variant.id)}
@@ -218,70 +230,86 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
                         >
                           <Trash2 size={16} />
                         </button>
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                       <div>
-                         <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Renk</label>
-                         <select
-                           required value={variant.color_id} onChange={(e) => handleUpdateVariant(variant.id, 'color_id', e.target.value)}
-                           className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
-                         >
-                           <option value="">Renk Seçin</option>
-                           {colors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                         </select>
-                       </div>
-                       <div>
-                         <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Beden / Ölçü</label>
-                         <select
-                           required value={variant.size_id} onChange={(e) => handleUpdateVariant(variant.id, 'size_id', e.target.value)}
-                           className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
-                         >
-                           <option value="">Beden Seçin</option>
-                           {sizes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                         </select>
-                       </div>
-                    </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                         <div>
+                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Renk</label>
+                           <select
+                             required value={variant.color_id} onChange={(e) => handleUpdateVariant(variant.id, 'color_id', e.target.value)}
+                             className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                           >
+                             <option value="">Renk Seçin</option>
+                             {colors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                           </select>
+                         </div>
+                         <div>
+                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Beden / Ölçü</label>
+                           <select
+                             required value={variant.size_id} onChange={(e) => handleUpdateVariant(variant.id, 'size_id', e.target.value)}
+                             className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                           >
+                             <option value="">Beden Seçin</option>
+                             {sizes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                           </select>
+                         </div>
+                      </div>
 
-                    <div className="grid grid-cols-4 gap-3">
-                       <div>
-                         <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Stok</label>
-                         <input 
-                           required type="number" min="0" value={variant.stock_quantity} onChange={(e) => handleUpdateVariant(variant.id, 'stock_quantity', e.target.value)}
-                           className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
-                           placeholder="Adet"
-                         />
-                       </div>
-                       <div>
-                         <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Kritik Stok</label>
-                         <input 
-                           required type="number" min="0" value={variant.low_stock_threshold} onChange={(e) => handleUpdateVariant(variant.id, 'low_stock_threshold', e.target.value)}
-                           className="w-full px-3 py-2 bg-rose-50 border border-rose-100 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-rose-500 outline-none transition-colors text-rose-600 font-bold"
-                           placeholder="Eşik"
-                         />
-                       </div>
-                       <div>
-                         <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Satış Fiyatı (₺)</label>
-                         <input 
-                           required type="number" min="0" step="0.01" value={variant.retail_price} onChange={(e) => handleUpdateVariant(variant.id, 'retail_price', e.target.value)}
-                           className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-emerald-600 font-bold"
-                           placeholder="0.00"
-                         />
-                       </div>
-                       <div>
-                         <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Barkod/SKU</label>
-                         <input 
-                           value={variant.sku} onChange={(e) => handleUpdateVariant(variant.id, 'sku', e.target.value)}
-                           className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[13px] font-mono focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
-                           placeholder="Oto-Kayıt"
-                         />
-                       </div>
-                    </div>
+                      <div className="grid grid-cols-4 gap-3">
+                         <div>
+                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Stok</label>
+                           <input 
+                             required type="number" min="0" value={variant.stock_quantity} onChange={(e) => handleUpdateVariant(variant.id, 'stock_quantity', e.target.value)}
+                             className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                             placeholder="Adet"
+                           />
+                         </div>
+                         <div>
+                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Kritik Stok</label>
+                           <input 
+                             required type="number" min="0" value={variant.low_stock_threshold} onChange={(e) => handleUpdateVariant(variant.id, 'low_stock_threshold', e.target.value)}
+                             className="w-full px-3 py-2 bg-rose-50 border border-rose-100 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-rose-500 outline-none transition-colors text-rose-600 font-bold"
+                             placeholder="Eşik"
+                           />
+                         </div>
+                         <div>
+                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Satış Fiyatı (₺)</label>
+                           <input 
+                             required type="number" min="0" step="0.01" value={variant.retail_price} onChange={(e) => handleUpdateVariant(variant.id, 'retail_price', e.target.value)}
+                             className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-emerald-600 font-bold"
+                             placeholder="0.00"
+                           />
+                         </div>
+                         <div>
+                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Barkod/SKU</label>
+                           <input 
+                             value={variant.sku} onChange={(e) => handleUpdateVariant(variant.id, 'sku', e.target.value)}
+                             className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[13px] font-mono focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                             placeholder="Oto-Kayıt"
+                           />
+                         </div>
+                      </div>
 
-                  </div>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="py-12 flex flex-col items-center justify-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 text-slate-400 gap-3"
+                >
+                  <Package size={40} className="opacity-20" />
+                  <p className="font-bold text-sm">Bu ürüne ait varyant bulunmuyor.</p>
+                  <button 
+                    type="button" 
+                    onClick={handleAddVariant}
+                    className="text-xs font-black text-blue-600 underline underline-offset-4"
+                  >
+                    Hemen yeni varyant ekleyin
+                  </button>
                 </motion.div>
-              ))}
+              )}
             </AnimatePresence>
           </div>
         </div>

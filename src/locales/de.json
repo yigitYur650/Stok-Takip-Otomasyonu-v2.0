@@ -1,0 +1,15 @@
+{
+  "menu": {
+    "dashboard": "Instrumententafel",
+    "inventory": "Inventar",
+    "sales": "Verkauf",
+    "reports": "Berichte",
+    "admin": "Administrator",
+    "signout": "Abmelden",
+    "change_password": "Passwort ändern"
+  },
+  "common": {
+    "welcome": "Willkommen",
+    "loading": "Wird geladen..."
+  }
+}

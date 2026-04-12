@@ -1,0 +1,15 @@
+{
+  "menu": {
+    "dashboard": "Tableau de Bord",
+    "inventory": "Inventaire",
+    "sales": "Ventes",
+    "reports": "Rapports",
+    "admin": "Admin",
+    "signout": "Déconnexion",
+    "change_password": "Changer le mot de passe"
+  },
+  "common": {
+    "welcome": "Bienvenue",
+    "loading": "Chargement..."
+  }
+}

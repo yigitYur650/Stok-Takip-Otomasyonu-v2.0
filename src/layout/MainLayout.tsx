@@ -5,6 +5,8 @@ import { useRole } from '../components/RoleContext';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { PasswordUpdateModal } from '../components/PasswordUpdateModal';
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { role, isAdmin } = useRole();
@@ -31,12 +33,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     checkConnection();
   }, []);
 
+  const { t } = useTranslation();
+
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-    { icon: Package, label: 'Envanter', path: '/inventory' },
-    { icon: ShoppingCart, label: 'Satışlar', path: '/sales' },
-    { icon: BarChart2, label: 'Raporlar', path: '/reports' },
-    ...(isAdmin ? [{ icon: Shield, label: 'Admin Paneli', path: '/admin' }] : []),
+    { icon: LayoutDashboard, label: t('menu.dashboard'), path: '/' },
+    { icon: Package, label: t('menu.inventory'), path: '/inventory' },
+    { icon: ShoppingCart, label: t('menu.sales'), path: '/sales' },
+    { icon: BarChart2, label: t('menu.reports'), path: '/reports' },
+    ...(isAdmin ? [{ icon: Shield, label: t('menu.admin'), path: '/admin' }] : []),
   ];
 
   return (
@@ -169,25 +173,28 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors border border-transparent text-sm"
            >
               <Key size={18} />
-              <span className="font-medium">Şifre Değiştir</span>
+              <span className="font-medium">{t('menu.change_password')}</span>
            </button>
            <button 
              onClick={signOut}
              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors border border-transparent text-sm"
            >
               <LogOut size={18} />
-              <span className="font-medium">Çıkış Yap</span>
+              <span className="font-medium">{t('menu.signout')}</span>
            </button>
         </div>
       </aside>
 
       <main className="flex-1 flex flex-col bg-slate-50/95 text-slate-800 h-screen overflow-y-auto relative z-10 custom-scrollbar shadow-[-10px_0_30px_rgb(0,0,0,0.2)]">
-        <header className="absolute top-6 right-8 z-50 pointer-events-none">
+        <header className="absolute top-6 right-8 z-50 pointer-events-none flex items-center gap-4">
+          <div className="pointer-events-auto">
+            <LanguageSwitcher />
+          </div>
           {profile && (
             <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 shadow-lg px-6 py-3 rounded-2xl flex items-center gap-3 transform transition-all duration-500 hover:scale-105 pointer-events-auto">
               <span className="text-xl">👋</span>
               <div>
-                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Hoş Geldiniz</p>
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{t('common.welcome')}</p>
                 <p className="text-sm font-bold text-slate-800">{profile.full_name}</p>
               </div>
             </div>

@@ -30,9 +30,12 @@ export interface IProductService {
 
 export interface ICategoryService {
   getAllCategories(): Promise<CategoryRow[]>;
+  getDeletedCategories(): Promise<CategoryRow[]>;
   createCategory(category: CategoryInsert): Promise<CategoryRow>;
   updateCategory(id: string, category: CategoryUpdate): Promise<CategoryRow>;
-  deleteCategory(id: string): Promise<void>;
+  softDeleteCategory(id: string): Promise<void>;
+  restoreCategory(id: string): Promise<void>;
+  permanentDeleteCategory(id: string): Promise<void>;
 }
 
 type StockMovementInsert = Database['public']['Tables']['stock_movements']['Insert'];

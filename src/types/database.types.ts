@@ -6,23 +6,26 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       categories: {
         Row: {
+          deleted_at: string | null
           id: string
           name: string
           parent_id: string | null
           shop_id: string
         }
         Insert: {
+          deleted_at?: string | null
           id?: string
           name: string
           parent_id?: string | null
           shop_id: string
         }
         Update: {
+          deleted_at?: string | null
           id?: string
           name?: string
           parent_id?: string | null
@@ -80,6 +83,7 @@ export interface Database {
       product_variants: {
         Row: {
           color: string | null
+          deleted_at: string | null
           id: string
           product_id: string
           retail_price: number
@@ -90,6 +94,7 @@ export interface Database {
         }
         Insert: {
           color?: string | null
+          deleted_at?: string | null
           id?: string
           product_id: string
           retail_price?: number
@@ -100,6 +105,7 @@ export interface Database {
         }
         Update: {
           color?: string | null
+          deleted_at?: string | null
           id?: string
           product_id?: string
           retail_price?: number
@@ -122,6 +128,7 @@ export interface Database {
         Row: {
           category_id: string | null
           created_at: string
+          deleted_at: string | null
           description: string | null
           id: string
           name: string
@@ -130,6 +137,7 @@ export interface Database {
         Insert: {
           category_id?: string | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           name: string
@@ -138,6 +146,7 @@ export interface Database {
         Update: {
           category_id?: string | null
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           name?: string

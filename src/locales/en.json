@@ -1,0 +1,15 @@
+{
+  "menu": {
+    "dashboard": "Dashboard",
+    "inventory": "Inventory",
+    "sales": "Sales",
+    "reports": "Reports",
+    "admin": "Admin Panel",
+    "signout": "Sign Out",
+    "change_password": "Change Password"
+  },
+  "common": {
+    "welcome": "Welcome",
+    "loading": "Loading..."
+  }
+}
