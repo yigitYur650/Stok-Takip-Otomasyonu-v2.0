@@ -82,36 +82,39 @@ export type Database = {
       }
       product_variants: {
         Row: {
-          color: string | null
+          color_id: string | null
           deleted_at: string | null
           id: string
           product_id: string
           retail_price: number
-          size: string | null
+          size_id: string | null
           sku: string | null
           stock_quantity: number
+          low_stock_threshold: number
           wholesale_price: number
         }
         Insert: {
-          color?: string | null
+          color_id?: string | null
           deleted_at?: string | null
           id?: string
           product_id: string
           retail_price?: number
-          size?: string | null
+          size_id?: string | null
           sku?: string | null
           stock_quantity?: number
+          low_stock_threshold?: number
           wholesale_price?: number
         }
         Update: {
-          color?: string | null
+          color_id?: string | null
           deleted_at?: string | null
           id?: string
           product_id?: string
           retail_price?: number
-          size?: string | null
+          size_id?: string | null
           sku?: string | null
           stock_quantity?: number
+          low_stock_threshold?: number
           wholesale_price?: number
         }
         Relationships: [

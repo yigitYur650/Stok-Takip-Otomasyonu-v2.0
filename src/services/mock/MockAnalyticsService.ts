@@ -1,4 +1,4 @@
-import { IAnalyticsService } from '../interfaces/IServices';
+import { IAnalyticsService, DateRange, FinancialSummary, ChartData, ProductPerformance } from '../interfaces/IServices';
 import { DashboardStats } from '../analyticsService';
 import { db } from '../../lib/dexie';
 
@@ -69,6 +69,53 @@ export class MockAnalyticsService implements IAnalyticsService {
       totalSalesToday,
       topSelling,
       lowStockItems
+    };
+  }
+
+  async getFinancialSummary(range: DateRange): Promise<FinancialSummary> {
+    return {
+      totalRevenue: 125000,
+      paymentMethods: [
+        { method: 'Nakit', amount: 45000 },
+        { method: 'Kredi Kartı', amount: 75000 },
+        { method: 'Havale/EFT', amount: 5000 }
+      ],
+      totalRefunds: 1200,
+      netProfit: 35000
+    };
+  }
+
+  async getSalesChartData(range: DateRange): Promise<ChartData[]> {
+    const labels = range === 'daily' 
+      ? ['09:00', '12:00', '15:00', '18:00', '21:00']
+      : range === 'weekly'
+      ? ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
+      : ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs'];
+      
+    return labels.map(label => ({
+      label,
+      sales: Math.floor(Math.random() * 10000) + 1000
+    }));
+  }
+
+  async getProductPerformance(range: DateRange): Promise<{ topSelling: ProductPerformance[]; nonSelling: ProductPerformance[] }> {
+    return {
+      topSelling: [
+        { id: '1', name: 'Pamuklu Tişört', sku: 'TS-001', salesCount: 150, revenue: 15000 },
+        { id: '2', name: 'Mavi Jean', sku: 'JN-005', salesCount: 85, revenue: 25500 }
+      ],
+      nonSelling: [
+        { id: '99', name: 'Eski Sezon Şapka', sku: 'HT-009', salesCount: 0, revenue: 0 },
+        { id: '100', name: 'Kışlık Atkı (Stokta Kalmış)', sku: 'SC-012', salesCount: 0, revenue: 0 }
+      ]
+    };
+  }
+
+  async getDailyPosSummary(): Promise<any> {
+    return {
+      cash: 1250.50,
+      card: 3420.75,
+      total: 4671.25
     };
   }
 }

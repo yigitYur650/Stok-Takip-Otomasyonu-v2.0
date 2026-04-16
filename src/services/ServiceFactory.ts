@@ -18,8 +18,8 @@ export interface AppServices {
 }
 
 export function getServices(supabaseClient: SupabaseClient<Database, 'public'>): AppServices {
-  // Mock servisler VITE_APP_MODE ne olursa olsun DEVRE DISI birakilmistir.
-  // 100% Supabase Production servislere gecis tamamladi.
+  // --- ÜRETİM ORTAMI SERVİS YAPILANDIRMASI ---
+  // Tüm servisler %100 Supabase altyapısına bağlanmıştır.
   return {
     productService: new ProductService(supabaseClient),
     saleService: new SaleService(supabaseClient),

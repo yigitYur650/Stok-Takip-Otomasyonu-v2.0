@@ -91,6 +91,7 @@ export function Inventory() {
         await productService.deleteProduct(id);
         triggerRefresh();
       } catch(err: any) {
+        console.error("❌ Envanter Silme Hatası:", err);
         alert(err.message || "Silinirken hata oluştu");
       }
     }

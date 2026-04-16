@@ -19,7 +19,7 @@ export class SaleService implements ISaleService {
       created_at,
       user_email: salePayload.user_email || 'Bilinmeyen',
       customer_note: salePayload.customer_note || '',
-      payment_method: salePayload.payment_method || 'UNSPECIFIED',
+      payment_type: salePayload.payment_method === 'CASH' ? 'CASH' : 'CARD', 
       discount_amount: salePayload.discount_amount || 0, // Eksik olan alan eklendi
       items: salePayload.items.map((item: any) => ({
         ...item, 
@@ -31,6 +31,9 @@ export class SaleService implements ISaleService {
         created_at: new Date().toISOString()
       }))
     };
+
+    // --- ÜRETİM ORTAMI SERVİS YAPILANDIRMASI ---
+    // Sistem genelinde Mock servis kullanımı durdurulmuş, tamamen Supabase'e geçilmiştir.
 
     // @ts-ignore
     const { data, error } = await this.supabase.rpc('process_sale', {

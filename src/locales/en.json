@@ -11,5 +11,26 @@
   "common": {
     "welcome": "Welcome",
     "loading": "Loading..."
+  },
+  "categoryManager": {
+    "title": "Category Manager",
+    "tabs": {
+      "active": "Active Categories",
+      "trash": "Trash Bin"
+    },
+    "buttons": {
+      "add": "Add New Category",
+      "delete": "Move to Trash",
+      "restore": "Restore",
+      "forceDelete": "Permanent Delete"
+    },
+    "messages": {
+      "emptyActive": "No active categories found yet.",
+      "emptyTrash": "Trash bin is empty.",
+      "restoreSuccess": "Category restored successfully.",
+      "deleteSuccess": "Category moved to trash.",
+      "forceDeleteSuccess": "Category deleted permanently.",
+      "hasProductsError": "This category cannot be deleted as it contains active products!"
+    }
   }
 }

@@ -83,7 +83,7 @@ export class CategoryService implements ICategoryService {
   async softDeleteCategory(id: string): Promise<void> {
     const { error } = await this.supabase
       .from('categories')
-      .update({ deleted_at: new Date().toISOString() } as any)
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
       
     if (error) throw error;
@@ -95,7 +95,7 @@ export class CategoryService implements ICategoryService {
   async restoreCategory(id: string): Promise<void> {
     const { error } = await this.supabase
       .from('categories')
-      .update({ deleted_at: null } as any)
+      .update({ deleted_at: null })
       .eq('id', id);
       
     if (error) throw error;
@@ -104,7 +104,7 @@ export class CategoryService implements ICategoryService {
   /**
    * Kategoriyi kalıcı olarak siler.
    */
-  async permanentDeleteCategory(id: string): Promise<void> {
+  async forceDeleteCategory(id: string): Promise<void> {
     const { error } = await this.supabase
       .from('categories')
       .delete()

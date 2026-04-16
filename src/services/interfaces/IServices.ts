@@ -35,7 +35,7 @@ export interface ICategoryService {
   updateCategory(id: string, category: CategoryUpdate): Promise<CategoryRow>;
   softDeleteCategory(id: string): Promise<void>;
   restoreCategory(id: string): Promise<void>;
-  permanentDeleteCategory(id: string): Promise<void>;
+  forceDeleteCategory(id: string): Promise<void>;
 }
 
 type StockMovementInsert = Database['public']['Tables']['stock_movements']['Insert'];
@@ -53,6 +53,32 @@ export interface ISaleService {
   getReturnsBySale(saleId: string): Promise<any[]>;
 }
 
+export type DateRange = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export interface FinancialSummary {
+  totalRevenue: number;
+  paymentMethods: { method: string; amount: number }[];
+  totalRefunds: number;
+  netProfit: number;
+}
+
+export interface ChartData {
+  label: string;
+  sales: number;
+}
+
+export interface ProductPerformance {
+  id: string;
+  name: string;
+  sku: string;
+  salesCount: number;
+  revenue: number;
+}
+
 export interface IAnalyticsService {
   getDashboardStats(date?: string): Promise<DashboardStats>;
+  getFinancialSummary(range: DateRange): Promise<FinancialSummary>;
+  getSalesChartData(range: DateRange): Promise<ChartData[]>;
+  getProductPerformance(range: DateRange): Promise<{ topSelling: ProductPerformance[]; nonSelling: ProductPerformance[] }>;
+  getDailyPosSummary(): Promise<any>;
 }

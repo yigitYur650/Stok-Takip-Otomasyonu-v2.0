@@ -132,10 +132,10 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
         const stockQtyNum = parseInt(v.stock_quantity.toString()) || 0;
         const lowStockThresholdNum = parseInt(v.low_stock_threshold.toString()) || 0;
 
-        const variantPayload: any = {
+        const variantPayload = {
           product_id: productId,
-          color: v.color_id || null, // UI state'ten veritabanı kolonuna (color)
-          size: v.size_id || null,   // UI state'ten veritabanı kolonuna (size)
+          color_id: v.color_id || null,
+          size_id: v.size_id || null,
           sku: v.sku?.trim() || null,
           retail_price: retailPriceNum,
           wholesale_price: retailPriceNum * 0.8,
@@ -154,8 +154,8 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
       triggerRefresh();
       onClose();
     } catch (err: any) {
-      console.error("CRITICAL ERROR:", err);
-      alert(`Bir hata oluştu: ${err.message || 'Bilinmiyor'}`);
+      console.error("Supabase Error:", err);
+      alert(`Ürün kaydedilirken hata oluştu: ${err.message || 'Bilinmiyor'}`);
     } finally {
       setLoading(false);
     }
@@ -325,7 +325,7 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
           </div>
           
           <div className="space-y-4">
-            {variants.map((v: any) => (
+            {variants.filter(v => v.isExisting).map((v: any) => (
               <MovementHistoryList key={v.id} variantId={v.id} variantLabel={`${v.sku || 'SKU Yok'} (${colors.find(c => c.id === v.color_id)?.name} - ${sizes.find(s => s.id === v.size_id)?.name})`} />
             ))}
           </div>
@@ -369,7 +369,15 @@ function MovementHistoryList({ variantId, variantLabel }: { variantId: string, v
 
   useEffect(() => {
     async function load() {
+      // UUID validasyonu: Sadece gerçek UUID formatındaki (36 karakter) ID'ler için istek atılır.
+      // Geçici ID'ler (Date.now()) genellikle 13 karakterdir.
+      if (!variantId || variantId.length < 20) {
+        setLoading(false);
+        return;
+      }
+
       try {
+        setLoading(true);
         const data = await stockService.getMovementHistory(variantId);
         setMovements(data || []);
       } catch (err) {

@@ -8,17 +8,28 @@ type CategoryUpdate = Database['public']['Tables']['categories']['Update'];
 
 export class MockCategoryService implements ICategoryService {
   async getAllCategories(): Promise<CategoryRow[]> {
-    const categories = await db.categories_sandbox.toArray();
+    const categories = await db.categories_sandbox
+      .filter(cat => !cat.deleted_at)
+      .toArray();
+    return categories as CategoryRow[];
+  }
+
+  async getDeletedCategories(): Promise<CategoryRow[]> {
+    const categories = await db.categories_sandbox
+      .filter(cat => !!cat.deleted_at)
+      .toArray();
     return categories as CategoryRow[];
   }
 
   async createCategory(category: CategoryInsert): Promise<CategoryRow> {
     const id = window.crypto.randomUUID();
-    const newCat = { 
-      ...category, 
-      id, 
-      created_at: new Date().toISOString() 
-    } as CategoryRow;
+    const newCat: CategoryRow = { 
+      id,
+      name: category.name,
+      shop_id: category.shop_id,
+      parent_id: category.parent_id || null,
+      deleted_at: null
+    };
     
     await db.categories_sandbox.add(newCat);
     return newCat;
@@ -30,7 +41,19 @@ export class MockCategoryService implements ICategoryService {
     return updated as CategoryRow;
   }
 
-  async deleteCategory(id: string): Promise<void> {
+  async softDeleteCategory(id: string): Promise<void> {
+    await db.categories_sandbox.update(id, { 
+      deleted_at: new Date().toISOString() 
+    });
+  }
+
+  async restoreCategory(id: string): Promise<void> {
+    await db.categories_sandbox.update(id, { 
+      deleted_at: null 
+    });
+  }
+
+  async forceDeleteCategory(id: string): Promise<void> {
     await db.categories_sandbox.delete(id);
   }
 }

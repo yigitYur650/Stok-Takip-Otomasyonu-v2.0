@@ -35,10 +35,17 @@ export class ProductService implements IProductService {
         product_variants (*, colors(name), sizes(name)),
         categories (id, name)
       `)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return (data as unknown) as JoinedProduct[];
+    
+    // Aktif ürünlerin içindeki silinmiş varyantları da temizleyelim
+    const products = (data as unknown) as JoinedProduct[];
+    return products.map(p => ({
+      ...p,
+      product_variants: p.product_variants?.filter((v: any) => !v.deleted_at) || []
+    }));
   }
 
   /**
@@ -48,6 +55,7 @@ export class ProductService implements IProductService {
     const { data, error } = await this.supabase
       .from('products')
       .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
       
     if (error) throw error;
@@ -101,17 +109,17 @@ export class ProductService implements IProductService {
    * Güvenlik Kontrolü: İçinde aktif (silinmemiş) varyantı olan ürünler silinemez.
    */
   async deleteProduct(id: string): Promise<void> {
-    // 1. Önce bu ürüne ait aktif varyantları sayıyoruz
-    const { count, error: countError } = await this.supabase
+    // 1. Önce bu ürüne bağlı tüm aktif varyantları da otomatik olarak 'silinmiş' işaretliyoruz.
+    // Bu sayede kullanıcı varyantları tek tek silmek zorunda kalmaz.
+    const { error: cascadeError } = await this.supabase
       .from('product_variants')
-      .select('*', { count: 'exact', head: true })
+      .update({ deleted_at: new Date().toISOString() } as any)
       .eq('product_id', id)
       .is('deleted_at', null);
 
-    if (countError) throw countError;
-
-    if (count !== null && count > 0) {
-      throw new Error("Bu ürüne ait aktif varyantlar bulunmaktadır. Lütfen silmeden önce varyantları çöp kutusuna taşıyın.");
+    if (cascadeError) {
+      console.error("❌ Cascade Delete (Variants) Error:", cascadeError);
+      throw cascadeError;
     }
 
     // 2. Eğer aktif varyant yoksa, ürünü silmeyip deleted_at alanını güncelliyoruz (Soft Delete)
@@ -120,7 +128,10 @@ export class ProductService implements IProductService {
       .update({ deleted_at: new Date().toISOString() } as any)
       .eq('id', id);
       
-    if (deleteError) throw deleteError;
+    if (deleteError) {
+      console.error("Supabase Delete Error:", deleteError);
+      throw deleteError;
+    }
   }
 
   // --- VARIANT METOTLARI ---
@@ -145,9 +156,10 @@ export class ProductService implements IProductService {
     const payload: VariantInsert = {
       product_id: variant.product_id,
       sku: variant.sku,
-      color: variant.color,
-      size: variant.size,
+      color_id: variant.color_id,
+      size_id: variant.size_id,
       stock_quantity: variant.stock_quantity,
+      low_stock_threshold: variant.low_stock_threshold,
       wholesale_price: variant.wholesale_price,
       retail_price: variant.retail_price
     };
@@ -168,9 +180,10 @@ export class ProductService implements IProductService {
   async updateVariant(id: string, variant: VariantUpdate): Promise<VariantRow> {
     const payload: VariantUpdate = {};
     if (variant.sku !== undefined) payload.sku = variant.sku;
-    if (variant.color !== undefined) payload.color = variant.color;
-    if (variant.size !== undefined) payload.size = variant.size;
+    if (variant.color_id !== undefined) payload.color_id = variant.color_id;
+    if (variant.size_id !== undefined) payload.size_id = variant.size_id;
     if (variant.stock_quantity !== undefined) payload.stock_quantity = variant.stock_quantity;
+    if (variant.low_stock_threshold !== undefined) payload.low_stock_threshold = variant.low_stock_threshold;
     if (variant.wholesale_price !== undefined) payload.wholesale_price = variant.wholesale_price;
     if (variant.retail_price !== undefined) payload.retail_price = variant.retail_price;
 
@@ -189,12 +202,15 @@ export class ProductService implements IProductService {
    * Varyantı siler (Soft Delete).
    */
   async deleteVariant(id: string): Promise<void> {
+    console.log(`🗑️ DeleteVariant attempt - ID: ${id}`);
     const { error } = await this.supabase
       .from('product_variants')
       .update({ deleted_at: new Date().toISOString() } as any)
       .eq('id', id);
-
-    if (error) throw error;
+    if (error) {
+      console.error("❌ DeleteVariant error:", error);
+      throw error;
+    }
   }
 
   /**

@@ -11,5 +11,26 @@
   "common": {
     "welcome": "Hoş Geldiniz",
     "loading": "Yükleniyor..."
+  },
+  "categoryManager": {
+    "title": "Kategori Yöneticisi",
+    "tabs": {
+      "active": "Aktif Kategoriler",
+      "trash": "Çöp Kutusu"
+    },
+    "buttons": {
+      "add": "Yeni Kategori Ekle",
+      "delete": "Çöpe At",
+      "restore": "Geri Yükle",
+      "forceDelete": "Kalıcı Sil"
+    },
+    "messages": {
+      "emptyActive": "Henüz aktif bir kategori bulunmuyor.",
+      "emptyTrash": "Çöp kutusu boş.",
+      "restoreSuccess": "Kategori başarıyla geri yüklendi.",
+      "deleteSuccess": "Kategori çöp kutusuna taşındı.",
+      "forceDeleteSuccess": "Kategori kalıcı olarak silindi.",
+      "hasProductsError": "Bu kategori içinde aktif ürünler barındırdığı için silinemez!"
+    }
   }
 }
