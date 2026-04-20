@@ -1,70 +1,44 @@
 # SaaS Textile ERP (Muhasebe & Stok Takip) - v2.0
 
-Bu proje, tekstil sektörüne yönelik modern, ölçeklenebilir ve profesyonel bir SaaS ("Software as a Service") çözümüdür. Katmanlı mimari (Clean Architecture), "Offline-first" yaklaşımı ve kapsamlı Multi-tenancy desteği barındırmaktadır.
+Bu proje, tekstil sektörüne yönelik modern, ölçeklenebilir ve profesyonel bir SaaS ("Software as a Service") çözümüdür. Katmanlı mimari (Clean Architecture), "DB-First" güvenlik yaklaşımı ve kapsamlı raporlama desteği ile donatılmıştır.
 
-### ✨ Öne Çıkan Özellikler
+## 🚀 V2.0 Güncellemesi ile Gelen Yenilikler
 
-- **Multi-Tenant (Çok Kiracılı) Yapı**: Supabase Row Level Security (RLS) ile veritabanı seviyesinde tam izolasyon.
-- **Offline-First**: Dexie.js (IndexedDB) ile internet olmasa dahi satış ve stok işlemlerine devam edebilme.
-- **Dinamik Temalandırma**: Sayfa bazlı otomatik renk geçişleri (Contextual Theming).
-- **Proses Otomasyonu**: Stok düşüşleri ve hareketleri PostgreSQL Trigger'ları ile otonom olarak yönetilir.
-- **Gelişmiş Raporlama**: Günlük ciro, kar/zarar ve kritik stok seviyeleri için hazır Analytics View'lar.
+Bu sürümde sistem mimarisi "Kurşun Geçirmez" hale getirilmiş ve profesyonel raporlama modülleri eklenmiştir:
+
+- **Gelişmiş PDF Raporlama**: 
+  - **Satış Fişi**: 80mm termal rulo formatında, Türkçe karakter destekli dijital fiş üretimi.
+  - **Envanter Dökümü**: Tüm stok durumunu A4 formatında tablo olarak dışa aktarma.
+  - **Dönemlik Analiz**: Günlük, haftalık ve aylık satış verilerini özet rapor olarak indirme.
+- **Veritabanı Seviyesinde Koruma**: 
+  - **Negatif Stok Engelleyici**: `CHECK CONSTRAINT` ile fiziksel imkansızlıklar (eksi stok) veritabanı seviyesinde yasaklanmıştır.
+  - **Akıllı Silme Kalkanı**: İçinde aktif varyantı bulunan ürünlerin silinmesi PostgreSQL Trigger'ları ile engellenerek veri bütünlüğü garanti altına alınmıştır.
+- **Kod Refactoring**: `productService.ts` ve `AuthContext.tsx` katmanları sadeleştirilerek performans artırılmış ve hassas log verileri temizlenmiştir.
 
 ---
 
-## 🚀 Teknoloji yığını
+### ✨ Öne Çıkan Özellikler
+
+- **Multi-Tenant (Çok Kiracılı) Yapı**: Supabase Row Level Security (RLS) ile dükkanlar arası tam veri izolasyonu.
+- **Offline-First Ready**: Dexie.js entegrasyonu ile yerel veri yönetimi altyapısı.
+- **Proses Otomasyonu**: Stok düşüşleri ve hareketleri PL/pgSQL Trigger'ları ile otonom olarak yönetilir.
+- **Dinamik Raporlama**: Satışlar sayfasında anlık tarih filtreleme ve ciro hesaplama motoru.
+
+---
+
+## 🛠️ Teknoloji Yığını
 
 - **Frontend**: React 18, Vite, TypeScript
 - **Styling**: Tailwind CSS (Modern & Premium Design)
 - **Backend/Database**: Supabase (PostgreSQL), RPC, PL/pgSQL
-- **Local Storage**: Dexie.js (IndexedDB)
+- **Reporting**: jsPDF, jspdf-autotable (Gelişmiş Tablo Desteği)
 - **Icons & UI**: Lucide React, Framer Motion
 
 ---
 
-## 🛠️ Kurulum
+## ⚙️ Kurulum
 
 1. **Repoyu Klonlayın**:
    ```bash
-   git clone https://github.com/yigitYur650/Stok-Takip-Otomasyonu-v2.0.git
+   git clone [https://github.com/yigitYur650/Stok-Takip-Otomasyonu-v2.0.git](https://github.com/yigitYur650/Stok-Takip-Otomasyonu-v2.0.git)
    cd Stok-Takip-Otomasyonu-v2.0
-   ```
-
-2. **Bağımlılıkları Kurun**:
-   ```bash
-   npm install
-   ```
-
-3. **Çevre Değişkenlerini Ayarlayın**:
-   `.env.example` dosyasını `.env` olarak kopyalayın ve kendi Supabase bilgilerinizi girin.
-   ```bash
-   cp .env.example .env
-   ```
-
-4. **Veritabanı Şeması**:
-   `supabase/migrations/full_production_schema.sql` dosyasını Supabase SQL Editor üzerinden çalıştırın.
-
-5. **Uygulamayı Başlatın**:
-   ```bash
-   npm run dev
-   ```
-
----
-
-## 🏗️ Mimari Yapı
-
-Proje **Solid** prensiplerine ve **Service Pattern** yapısına uygun olarak geliştirilmiştir:
-- `src/services`: İş mantığının ve veritabanı erişiminin soyutlandığı katman.
-- `src/context`: Kimlik doğrulama ve ana veri yönetimi için global state yönetimi.
-- `src/layout`: Dinamik sidebar ve navigasyon yapısı.
-
----
-
-## 🔐 Güvenlik Uyarıları
-- Bu proje **Supabase RLS** politikaları ile korunmaktadır.
-- `.env` dosyanızı asla GitHub'a yüklemeyin ( `.gitignore` dosyası bu projede hazır olarak gelmektedir).
-
----
-
-## 📄 Lisans
-Bu proje özel mülkiyet niteliğindedir. İzinsiz kopyalanamaz ve dağıtılamaz.
