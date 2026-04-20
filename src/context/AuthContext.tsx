@@ -49,7 +49,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (profileData.shop_id) {
         localStorage.setItem('active_shop_id', profileData.shop_id);
       }
-      console.log("✅ Profile Loaded:", profileData.shop_id);
     }
   };
 
@@ -60,8 +59,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       try {
         if (!mounted) return;
         setLoading(true);
-        console.log("Auth Context: Handling session...", !!session);
-        
+
         if (session?.user) {
           setUser(session.user);
           await fetchProfile(session.user.id);
@@ -79,18 +77,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } finally {
         if (mounted) {
           setLoading(false);
-          console.log("Auth Context: Loading set to false");
         }
       }
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("🔄 Auth Event Fired:", event);
-      
+
       if (event === 'PASSWORD_RECOVERY') {
         setIsRecovering(true);
       }
-      
+
       handleSession(session);
     });
 
@@ -117,11 +113,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      profile, 
-      loading, 
-      signOut, 
+    <AuthContext.Provider value={{
+      user,
+      profile,
+      loading,
+      signOut,
       refreshProfile: handleRefreshProfile,
       isRecovering,
       setRecovering: setIsRecovering

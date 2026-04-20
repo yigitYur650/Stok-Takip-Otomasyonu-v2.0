@@ -1,0 +1,152 @@
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+export const pdfService = {
+  generateSaleReceipt: (sale: any, shopName: string = 'MAĞAZA') => {
+    const doc = new jsPDF({ format: [80, 150] }); // 80mm fiş formatı
+    
+    // Türkçe karakter uyumluluğu için basit bir replace fonksiyonu (isteğe bağlı)
+    const sanitize = (text: string) => text ? text.toString().replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/İ/g, 'I').replace(/Ö/g, 'O').replace(/Ç/g, 'C') : '';
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text(sanitize(shopName), 40, 15, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("SATIS FISI", 40, 22, { align: 'center' });
+    
+    doc.setFontSize(8);
+    doc.text(`Tarih: ${new Date(sale.created_at).toLocaleString()}`, 5, 32);
+    doc.text(`Fis No: ${sale.id.split('-')[0].toUpperCase()}`, 5, 36);
+    doc.text(`Kasiyer: ${sanitize(sale.user_email?.split('@')[0] || 'Admin')}`, 5, 40);
+
+    const tableData = sale.sale_items?.map((item: any) => [
+      sanitize(item.product_variants?.products?.name || 'Urun'),
+      item.quantity,
+      `${Number(item.total_price).toLocaleString()} TL`
+    ]) || [];
+
+    autoTable(doc, {
+      startY: 45,
+      head: [['Urun', 'Miktar', 'Tutar']],
+      body: tableData,
+      theme: 'plain',
+      styles: { fontSize: 8, cellPadding: 1 },
+      headStyles: { fontStyle: 'bold', lineWidth: { bottom: 0.5 }, lineColor: 0 },
+      margin: { left: 5, right: 5 }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY || 45;
+    
+    doc.setFont("helvetica", "bold");
+    doc.text("------------------------------------------------", 40, finalY + 5, { align: 'center' });
+    doc.text(`GENEL TOPLAM: ${Number(sale.total_amount).toLocaleString()} TL`, 5, finalY + 10);
+    
+    doc.setFont("helvetica", "normal");
+    doc.text(`Odeme Tipi: ${sale.payment_method}`, 5, finalY + 15);
+
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8);
+    doc.text("Bizi tercih ettiginiz", 40, finalY + 25, { align: 'center' });
+    doc.text("icin tesekkur ederiz.", 40, finalY + 29, { align: 'center' });
+
+    doc.save(`Fis_${sale.id.split('-')[0]}.pdf`);
+  },
+
+  generateInventoryReport: (products: any[], shopName: string = 'MAĞAZA') => {
+    const doc = new jsPDF();
+    
+    const sanitize = (text: string) => text ? text.toString().replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/İ/g, 'I').replace(/Ö/g, 'O').replace(/Ç/g, 'C') : '';
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text(`${sanitize(shopName)} - ENVANTER RAPORU`, 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Rapor Tarihi: ${new Date().toLocaleString()}`, 14, 28);
+
+    const tableData: any[] = [];
+    
+    products.forEach(p => {
+      if (p.product_variants && p.product_variants.length > 0) {
+        p.product_variants.forEach((v: any) => {
+          tableData.push([
+            sanitize(p.name),
+            v.sku || '-',
+            `${sanitize(v.colors?.name || '-')} / ${sanitize(v.sizes?.name || '-')}`,
+            v.stock_quantity.toString(),
+            `${Number(v.retail_price).toLocaleString()} TL`
+          ]);
+        });
+      } else {
+        tableData.push([sanitize(p.name), '-', '-', '0', '-']);
+      }
+    });
+
+    autoTable(doc, {
+      startY: 35,
+      head: [['Urun Adi', 'SKU', 'Renk/Beden', 'Stok', 'Fiyat']],
+      body: tableData,
+      theme: 'grid',
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [79, 70, 229] } // bg-indigo-600
+    });
+
+    doc.save(`Envanter_Raporu_${new Date().toISOString().split('T')[0]}.pdf`);
+  },
+
+  generateSalesReport: (filteredSales: any[], periodName: string, shopName: string = 'MAĞAZA') => {
+    const doc = new jsPDF();
+    const sanitize = (text: string) => text ? text.toString().replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/İ/g, 'I').replace(/Ö/g, 'O').replace(/Ç/g, 'C') : '';
+
+    const periodMap: Record<string, string> = {
+      daily: 'GUNLUK',
+      weekly: 'HAFTALIK',
+      monthly: 'AYLIK',
+      yearly: 'YILLIK',
+      all: 'TUM ZAMANLAR'
+    };
+    const titlePeriod = periodMap[periodName] || 'SATIS';
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text(`${sanitize(shopName)} - ${titlePeriod} SATIS RAPORU`, 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Rapor Tarihi: ${new Date().toLocaleString()}`, 14, 28);
+
+    let grandTotal = 0;
+    const tableData = filteredSales.map(sale => {
+      const amount = Number(sale.total_amount) || 0;
+      grandTotal += amount;
+      const itemCount = sale.sale_items?.reduce((sum: number, it: any) => sum + it.quantity, 0) || 0;
+      
+      return [
+        new Date(sale.created_at).toLocaleString(),
+        sale.id.split('-')[0].toUpperCase(),
+        itemCount.toString(),
+        `${amount.toLocaleString()} TL`
+      ];
+    });
+
+    autoTable(doc, {
+      startY: 35,
+      head: [['Tarih', 'Satis ID', 'Urun Sayisi', 'Toplam Tutar']],
+      body: tableData,
+      theme: 'striped',
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [79, 70, 229] }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY || 40;
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`Genel Toplam: ${grandTotal.toLocaleString()} TL`, 14, finalY + 10);
+
+    doc.save(`Satis_Raporu_${titlePeriod}_${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+};

@@ -9,6 +9,8 @@ import { CategoryManager } from '../components/CategoryManager';
 import { SkeletonCard } from '../components/Skeleton';
 import { useMasterData } from '../context/MasterDataContext';
 import { useAuth } from '../context/AuthContext';
+import { pdfService } from '../services/pdfService';
+import { FileText } from 'lucide-react';
 
 export function Inventory() {
   const { productService, stockService } = useServices();
@@ -119,7 +121,13 @@ export function Inventory() {
         </div>
         
         {profile?.role === 3 && (
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
+            <button 
+              onClick={() => pdfService.generateInventoryReport(products, profile?.shops?.name)}
+              className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-6 py-3 rounded-2xl font-bold text-sm transition-all border border-emerald-200 shadow-sm"
+            >
+              <FileText size={18} /> Rapor Al (PDF)
+            </button>
             <button 
               onClick={() => setIsCategoryManagerOpen(true)}
               className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-2xl font-bold text-sm transition-all border border-slate-200 shadow-sm"

@@ -26,6 +26,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useRefresh } from '../components/RefreshContext';
 import { SlideOver } from '../components/SlideOver';
+import { pdfService } from '../services/pdfService';
+import { Download } from 'lucide-react';
 
 interface CartItem {
   variant_id: string;
@@ -62,6 +64,10 @@ export function Sales() {
   const [returnReason, setReturnReason] = useState('Müşteri Vazgeçti');
   const [saleReturns, setSaleReturns] = useState<any[]>([]);
 
+  // Report States
+  const [allSalesData, setAllSalesData] = useState<any[]>([]);
+  const [reportPeriod, setReportPeriod] = useState('daily');
+
   // Fetch initial data
   useEffect(() => {
     async function loadData() {
@@ -84,6 +90,10 @@ export function Sales() {
           });
         });
         setProducts(flattened);
+
+        // Fetch All Sales
+        const allSales = await saleService.getAllSales();
+        setAllSalesData(allSales);
 
         // Fetch Today's Data
         const sales = await saleService.getTodaySales();
@@ -110,6 +120,38 @@ export function Sales() {
       p.variant_name.toLowerCase().includes(lq)
     );
   }, [products, searchQuery]);
+
+  // Report Memo
+  const filteredReportSales = useMemo(() => {
+    const now = new Date();
+    return allSalesData.filter(sale => {
+      const saleDate = new Date(sale.created_at);
+      if (reportPeriod === 'daily') {
+        return saleDate.toDateString() === now.toDateString();
+      } else if (reportPeriod === 'weekly') {
+        const weekAgo = new Date();
+        weekAgo.setDate(now.getDate() - 7);
+        return saleDate >= weekAgo;
+      } else if (reportPeriod === 'monthly') {
+        const monthAgo = new Date();
+        monthAgo.setMonth(now.getMonth() - 1);
+        return saleDate >= monthAgo;
+      } else if (reportPeriod === 'yearly') {
+        const yearAgo = new Date();
+        yearAgo.setFullYear(now.getFullYear() - 1);
+        return saleDate >= yearAgo;
+      }
+      return true; // 'all'
+    });
+  }, [allSalesData, reportPeriod]);
+
+  const reportSummary = useMemo(() => {
+    return filteredReportSales.reduce((acc, sale) => {
+      acc.total += Number(sale.total_amount) || 0;
+      acc.count += 1;
+      return acc;
+    }, { total: 0, count: 0 });
+  }, [filteredReportSales]);
 
   // Cart Actions
   const addToCart = (product: any) => {
@@ -430,14 +472,49 @@ export function Sales() {
         />
       )}
 
-      {/* Son Satışlar Modalı */}
+      {/* Satış Geçmişi & Raporlama Modalı */}
       <SlideOver 
         isOpen={isHistoryOpen} 
         onClose={() => { setIsHistoryOpen(false); setSelectedSale(null); }}
-        title="Bugünün Satışları"
+        title="Satış Geçmişi & Raporlama"
       >
-        <div className="space-y-4">
-           {recentSales.map((sale) => (
+        <div className="space-y-6">
+           {/* Raporlama Kontrolleri */}
+           <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100 flex flex-col gap-4 shadow-sm">
+              <div className="flex justify-between items-center">
+                 <select 
+                   value={reportPeriod} 
+                   onChange={(e) => setReportPeriod(e.target.value)}
+                   className="bg-white border border-emerald-100 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm outline-none transition-colors"
+                 >
+                   <option value="daily">Günlük</option>
+                   <option value="weekly">Haftalık</option>
+                   <option value="monthly">Aylık</option>
+                   <option value="yearly">Yıllık</option>
+                   <option value="all">Tümü</option>
+                 </select>
+                 <button 
+                   onClick={() => pdfService.generateSalesReport(filteredReportSales, reportPeriod, profile?.shops?.name)}
+                   className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-200"
+                 >
+                   <Download size={16} /> Rapor İndir
+                 </button>
+              </div>
+              <div className="flex gap-4">
+                 <div className="flex-1 bg-white p-4 rounded-2xl border border-emerald-50 shadow-sm">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Toplam Ciro</p>
+                    <p className="text-xl font-black text-emerald-600">₺{reportSummary.total.toLocaleString()}</p>
+                 </div>
+                 <div className="flex-1 bg-white p-4 rounded-2xl border border-emerald-50 shadow-sm">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Satış Adedi</p>
+                    <p className="text-xl font-black text-slate-800">{reportSummary.count} <span className="text-sm text-slate-400 font-medium">İşlem</span></p>
+                 </div>
+              </div>
+           </div>
+
+           <div className="space-y-3">
+             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Satış Listesi</h4>
+             {filteredReportSales.map((sale) => (
              <button 
                key={sale.id}
                onClick={() => setSelectedSale(sale)}
@@ -465,8 +542,10 @@ export function Sales() {
              </button>
            ))}
 
-           {recentSales.length === 0 && (
-             <div className="text-center py-20 text-slate-300 font-bold uppercase tracking-widest italic opacity-50">Henüz satış yok</div>
+           </div>
+
+           {filteredReportSales.length === 0 && (
+             <div className="text-center py-20 text-slate-300 font-bold uppercase tracking-widest italic opacity-50">Seçilen dönemde satış yok</div>
            )}
 
            {/* Satış Detayı */}

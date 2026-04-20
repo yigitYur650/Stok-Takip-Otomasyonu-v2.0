@@ -49,6 +49,28 @@ export class SaleService implements ISaleService {
   }
 
   /**
+   * Tüm satışları getirir (Raporlama için)
+   */
+  async getAllSales(): Promise<any[]> {
+    const { data, error } = await this.supabase
+      .from('sales')
+      .select(`
+        *,
+        sale_items (
+          *,
+          product_variants (
+            *,
+            products (name)
+          )
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  /**
    * Bugün yapılan satışları, kalemleriyle birlikte getirir.
    */
   async getTodaySales(): Promise<any[]> {

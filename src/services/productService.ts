@@ -106,23 +106,10 @@ export class ProductService implements IProductService {
 
   /**
    * Ürünü siler (Soft Delete). 
-   * Güvenlik Kontrolü: İçinde aktif (silinmemiş) varyantı olan ürünler silinemez.
+   * Güvenlik Kontrolü: Veritabanındaki trigger aracılığıyla,
+   * aktif (silinmemiş) varyantı olan ürünler silinemez.
    */
   async deleteProduct(id: string): Promise<void> {
-    // 1. Önce bu ürüne bağlı tüm aktif varyantları da otomatik olarak 'silinmiş' işaretliyoruz.
-    // Bu sayede kullanıcı varyantları tek tek silmek zorunda kalmaz.
-    const { error: cascadeError } = await this.supabase
-      .from('product_variants')
-      .update({ deleted_at: new Date().toISOString() } as any)
-      .eq('product_id', id)
-      .is('deleted_at', null);
-
-    if (cascadeError) {
-      console.error("❌ Cascade Delete (Variants) Error:", cascadeError);
-      throw cascadeError;
-    }
-
-    // 2. Eğer aktif varyant yoksa, ürünü silmeyip deleted_at alanını güncelliyoruz (Soft Delete)
     const { error: deleteError } = await this.supabase
       .from('products')
       .update({ deleted_at: new Date().toISOString() } as any)
@@ -130,7 +117,7 @@ export class ProductService implements IProductService {
       
     if (deleteError) {
       console.error("Supabase Delete Error:", deleteError);
-      throw deleteError;
+      throw new Error(deleteError.message || 'Ürün silinirken bir hata oluştu.');
     }
   }
 
