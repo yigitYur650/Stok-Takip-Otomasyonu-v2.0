@@ -17,6 +17,10 @@ Bu proje, modern işletmelerin envanter, satış ve stok hareketlerini gerçek z
 
 📱 Responsive Tasarım: Tailwind CSS ve Headless UI ile tüm cihazlarda kusursuz deneyim.
 
+🛡️ Veri Bütünlüğü: PostgreSQL Trigger'ları ve Check Constraint'ler sayesinde negatif stok oluşumu veritabanı seviyesinde engellenir.
+
+💾 Çevrimdışı Destek: Dexie.js entegrasyonu ile bağlantı sorunlarında veri kaybını önleyen yerel veritabanı altyapısı.
+
 🛠 Teknolojiler
 Frontend: React 18, TypeScript, Vite
 
@@ -55,6 +59,10 @@ This project is a cloud-based automation system designed for modern businesses t
 📄 PDF Reporting: Professional PDF exports for sales and stock status.
 
 📱 Responsive Design: Seamless experience across all devices with Tailwind CSS and Headless UI.
+
+🛡️ Data Integrity: Negative stock levels are prevented at the database level using PostgreSQL Triggers and Check Constraints.
+
+💾 Offline Readiness: Local database infrastructure via Dexie.js to prevent data loss during connectivity issues.
 
 🛠 Tech Stack
 Frontend: React 18, TypeScript, Vite
