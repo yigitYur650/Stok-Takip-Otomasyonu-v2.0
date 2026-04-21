@@ -14,6 +14,7 @@ Bu sürümde sistem mimarisi "Kurşun Geçirmez" hale getirilmiş ve profesyonel
   - **Negatif Stok Engelleyici**: `CHECK CONSTRAINT` ile fiziksel imkansızlıklar (eksi stok) veritabanı seviyesinde yasaklanmıştır.
   - **Akıllı Silme Kalkanı**: İçinde aktif varyantı bulunan ürünlerin silinmesi PostgreSQL Trigger'ları ile engellenerek veri bütünlüğü garanti altına alınmıştır.
 - **Kod Refactoring**: `productService.ts` ve `AuthContext.tsx` katmanları sadeleştirilerek performans artırılmış ve hassas log verileri temizlenmiştir.
+- Kapsamlı Test Suite: İş mantığının %100 doğruluğunu sağlamak için servis katmanına 17 farklı senaryoyu kapsayan unit testler eklendi.
 
 ---
 
