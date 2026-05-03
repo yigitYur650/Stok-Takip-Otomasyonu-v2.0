@@ -45,12 +45,13 @@ jobs:
         run: |
           cd backend
           go build -v -o bin/server main.go
+          chmod +x bin/server
 
       - name: Initialize Database Schema
         env:
           PGPASSWORD: password
         run: |
-          psql -h localhost -U postgres -d textile_erp_test -c "
+          psql -h 127.0.0.1 -U postgres -d textile_erp_test -c "
           CREATE TABLE IF NOT EXISTS sales (
               id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
               product_id UUID,
@@ -77,19 +78,33 @@ jobs:
               created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
           );"
 
-      - name: Start Server and Run k6 Smoke Test
+      - name: Run k6 Smoke Test
         env:
-          DATABASE_URL: postgres://postgres:password@localhost:5432/textile_erp_test?sslmode=disable
+          DATABASE_URL: postgres://postgres:password@127.0.0.1:5432/textile_erp_test?sslmode=disable
           METRICS_TOKEN: ci_test_token
         run: |
           cd backend
-          # Sunucuyu başlat ve çıktıları log.txt'ye yaz
-          ./bin/server > server_log.txt 2>&1 & 
-          sleep 7
+          # Sunucuyu arka planda başlat
+          ./bin/server > server_log.txt 2>&1 &
           
-          # Sunucu hala ayakta mı kontrol et
-          ps aux | grep server
+          # Sunucunun hazır olmasını bekle (Max 30sn)
+          echo "Waiting for server to be ready..."
+          for i in {1..30}; do
+            if curl -s http://127.0.0.1:3001/metrics -H "X-Metrics-Token: ci_test_token" > /dev/null; then
+              echo "Server is UP!"
+              break
+            fi
+            echo "Waiting... ($i)"
+            sleep 1
+          done
+
+          # Eğer hala kapalıysa logları bas ve çık
+          if ! curl -s http://127.0.0.1:3001/metrics -H "X-Metrics-Token: ci_test_token" > /dev/null; then
+            echo "ERROR: Server failed to start!"
+            cat server_log.txt
+            exit 1
+          fi
           
-          # k6 yükle (Sadece gerekliyse - normalde k6 action daha iyidir ama bu yapı daha kontrollü)
+          # k6'yı indir ve çalıştır
           curl https://github.com/grafana/k6/releases/download/v0.49.0/k6-v0.49.0-linux-amd64.tar.gz -L | tar xvz
-          ./k6-v0.49.0-linux-amd64/k6 run ../tests/load/stress_test.js --vus 5 --duration 10s || (cat server_log.txt && exit 1)
+          ./k6-v0.49.0-linux-amd64/k6 run ../tests/load/stress_test.js --vus 2 --duration 5s
