@@ -12,8 +12,10 @@ import { useMasterData } from '../context/MasterDataContext';
 import { SkeletonRow } from '../components/Skeleton';
 import { createClient } from '@supabase/supabase-js';
 import { SlideOver } from '../components/SlideOver';
+import { useTranslation } from 'react-i18next';
 
 export function AdminDashboard() {
+  const { t } = useTranslation();
   const { isAdmin } = useRole();
   const { profile } = useAuth();
   const { categories, colors, sizes, loading, refreshMasterData } = useMasterData();
@@ -31,7 +33,7 @@ export function AdminDashboard() {
       shop_id: profile.shop_id
     } as any);
     
-    if (error) alert("Kategori eklenirken hata: " + error.message);
+    if (error) alert(t('admin.masterData.categories.errorAdd') + ": " + error.message);
     else { setNewCat(''); await refreshMasterData(); }
   };
 
@@ -44,7 +46,7 @@ export function AdminDashboard() {
       shop_id: profile.shop_id
     } as any);
     
-    if (error) alert("Renk eklenirken hata: " + error.message);
+    if (error) alert(t('admin.masterData.colors.errorAdd') + ": " + error.message);
     else { setNewColor(''); await refreshMasterData(); }
   };
 
@@ -57,13 +59,13 @@ export function AdminDashboard() {
       shop_id: profile.shop_id
     } as any);
 
-    if (error) alert("Beden eklenirken hata: " + error.message);
+    if (error) alert(t('admin.masterData.sizes.errorAdd') + ": " + error.message);
     else { setNewSize(''); await refreshMasterData(); }
   };
 
   const handleDelete = async (tableName: 'categories' | 'colors' | 'sizes', id: string) => {
     const { error } = await supabase.from(tableName).delete().eq('id', id);
-    if (error) alert("Silinirken hata: " + error.message);
+    if (error) alert(t('admin.masterData.common.errorDelete') + ": " + error.message);
     else await refreshMasterData();
   };
 
@@ -72,8 +74,8 @@ export function AdminDashboard() {
       <PageTransition className="flex items-center justify-center p-8">
         <div className="text-center bg-white p-8 rounded-3xl shadow-xl flex flex-col items-center max-w-sm">
            <ShieldAlert size={64} className="text-rose-500 mb-4" />
-           <h2 className="text-xl font-bold text-slate-800">Yetkisiz Erişim</h2>
-           <p className="text-sm text-slate-500 mt-2">Bu sayfayı görüntülemek için PATRON rolüne sahip olmalısınız.</p>
+           <h2 className="text-xl font-bold text-slate-800">{t('admin.unauthorized.title')}</h2>
+           <p className="text-sm text-slate-500 mt-2">{t('admin.unauthorized.message')}</p>
         </div>
       </PageTransition>
     );
@@ -82,16 +84,16 @@ export function AdminDashboard() {
   return (
     <PageTransition className="pb-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Admin Kontrol Paneli</h1>
-        <p className="text-sm text-slate-500 mt-1">Ana verileri (Master Data) yalnızca yetkili kullanıcılar yönetebilir.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">{t('admin.title')}</h1>
+        <p className="text-sm text-slate-500 mt-1">{t('admin.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
          {/* Kategoriler */}
          <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-6 flex flex-col">
-            <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Kategoriler (Ana Ürün Seçimi)</h3>
+            <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">{t('admin.masterData.categories.title')}</h3>
             <form onSubmit={handleAddCategory} className="flex gap-2 mb-4">
-               <input value={newCat} onChange={(e) => setNewCat(e.target.value)} placeholder="Yeni Kategori" className="flex-1 bg-slate-50 border px-3 py-2 rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500"/>
+               <input value={newCat} onChange={(e) => setNewCat(e.target.value)} placeholder={t('admin.masterData.categories.placeholder')} className="flex-1 bg-slate-50 border px-3 py-2 rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500"/>
                <button type="submit" className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700"><Plus size={18}/></button>
             </form>
             <div className="flex-1 overflow-y-auto space-y-2">
@@ -112,9 +114,9 @@ export function AdminDashboard() {
 
          {/* Renkler */}
          <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-6 flex flex-col">
-            <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Renk Tanımları</h3>
+            <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">{t('admin.masterData.colors.title')}</h3>
             <form onSubmit={handleAddColor} className="flex gap-2 mb-4">
-               <input value={newColor} onChange={(e) => setNewColor(e.target.value)} placeholder="Renk Adı (Siyah vb.)" className="flex-1 bg-slate-50 border px-3 py-2 rounded-lg text-sm outline-none focus:ring-1 focus:ring-emerald-500"/>
+               <input value={newColor} onChange={(e) => setNewColor(e.target.value)} placeholder={t('admin.masterData.colors.placeholder')} className="flex-1 bg-slate-50 border px-3 py-2 rounded-lg text-sm outline-none focus:ring-1 focus:ring-emerald-500"/>
                <button type="submit" className="bg-emerald-600 text-white p-2 rounded-lg hover:bg-emerald-700"><Plus size={18}/></button>
             </form>
             <div className="flex-1 overflow-y-auto space-y-2">
@@ -135,9 +137,9 @@ export function AdminDashboard() {
 
          {/* Bedenler */}
          <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-6 flex flex-col">
-            <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Beden / Ölçek Tablosu</h3>
+            <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">{t('admin.masterData.sizes.title')}</h3>
             <form onSubmit={handleAddSize} className="flex gap-2 mb-4">
-               <input value={newSize} onChange={(e) => setNewSize(e.target.value)} placeholder="Beden (S, M, L vb.)" className="flex-1 bg-slate-50 border px-3 py-2 rounded-lg text-sm outline-none focus:ring-1 focus:ring-purple-500"/>
+               <input value={newSize} onChange={(e) => setNewSize(e.target.value)} placeholder={t('admin.masterData.sizes.placeholder')} className="flex-1 bg-slate-50 border px-3 py-2 rounded-lg text-sm outline-none focus:ring-1 focus:ring-purple-500"/>
                <button type="submit" className="bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700"><Plus size={18}/></button>
             </form>
             <div className="flex-1 overflow-y-auto space-y-2">
@@ -164,8 +166,8 @@ export function AdminDashboard() {
              <Users size={24} />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Personeller / Kullanıcılar</h2>
-            <p className="text-xs text-slate-500 font-medium">Mağazanıza bağlı çalışanları yönetin ve yeni hesaplar tanımlayın.</p>
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight">{t('admin.staff.title')}</h2>
+            <p className="text-xs text-slate-500 font-medium">{t('admin.staff.subtitle')}</p>
           </div>
         </div>
         
@@ -177,6 +179,7 @@ export function AdminDashboard() {
 
 // Personel Yönetimi Alt Bileşeni
 function StaffManagement({ shopId }: { shopId: string }) {
+  const { t } = useTranslation();
   const { user: currentUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [staffList, setStaffList] = useState<any[]>([]);
@@ -253,11 +256,11 @@ function StaffManagement({ shopId }: { shopId: string }) {
       
       if (error) throw error;
       
-      alert("Personel rolü güncellendi.");
+      alert(t('admin.staff.detail.updateSuccess'));
       setSelectedStaff({ ...selectedStaff, role: parseInt(newRole) });
       fetchStaff();
     } catch (err) {
-      alert("Hata oluştu.");
+      alert(t('admin.staff.detail.updateError'));
     } finally {
       setUpdatingRole(false);
     }
@@ -276,7 +279,7 @@ function StaffManagement({ shopId }: { shopId: string }) {
 
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) return alert("Şifre en az 6 karakter olmalıdır.");
+    if (password.length < 6) return alert(t('admin.staff.addForm.errorPassword'));
     
     setLoading(true);
     try {
@@ -296,7 +299,7 @@ function StaffManagement({ shopId }: { shopId: string }) {
       });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error("Kullanıcı oluşturulamadı.");
+      if (!authData.user) throw new Error(t('admin.staff.addForm.errorCreate'));
 
       // 3. Profil Oluştur (Orijinal supabase instance ile)
       const { error: profileError } = await supabase
@@ -311,25 +314,25 @@ function StaffManagement({ shopId }: { shopId: string }) {
 
       if (profileError) throw profileError;
 
-      alert("Personel başarıyla eklendi.");
+      alert(t('admin.staff.addForm.success'));
       setEmail(''); setPassword(''); setFullName('');
       fetchStaff();
     } catch (err: any) {
       console.error("Staff creation error:", err);
-      alert("Hata oluştu: " + err.message);
+      alert(t('admin.staff.detail.updateError') + ": " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   const deleteStaff = async (id: string) => {
-    if (!confirm("Bu personeli silmek istediğinize emin misiniz? (Not: Sadece profili siler, auth kaydı admin panelinden silinemez)")) return;
+    if (!confirm(t('admin.staff.detail.deleteConfirm'))) return;
     try {
       const { error } = await supabase.from('profiles').delete().eq('id', id);
       if (error) throw error;
       fetchStaff();
     } catch (err) {
-      alert("Silinirken hata oluştu.");
+      alert(t('admin.staff.detail.deleteError'));
     }
   };
 
@@ -338,54 +341,54 @@ function StaffManagement({ shopId }: { shopId: string }) {
       {/* Sol: Form */}
       <div className="lg:col-span-4 bg-white border border-slate-100 rounded-[32px] p-8 shadow-xl shadow-slate-200/50 h-fit">
          <h4 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
-            <UserPlus size={20} className="text-indigo-600" /> Yeni Personel Ekle
+            <UserPlus size={20} className="text-indigo-600" /> {t('admin.staff.addForm.title')}
          </h4>
          
          <form onSubmit={handleCreateStaff} className="space-y-5">
             <div>
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">Ad Soyad</label>
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">{t('admin.staff.addForm.fullName')}</label>
                <div className="relative">
                   <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                   <input 
                     required type="text" value={fullName} onChange={(e) => setFullName(e.target.value)}
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 font-bold text-sm"
-                    placeholder="Örn: Ahmet Yılmaz"
+                    placeholder={t('admin.staff.addForm.fullNamePlaceholder')}
                   />
                </div>
             </div>
 
             <div>
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">E-Posta Adresi</label>
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">{t('admin.staff.addForm.email')}</label>
                <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                   <input 
                     required type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 font-bold text-sm"
-                    placeholder="personel@magaza.com"
+                    placeholder={t('admin.staff.addForm.emailPlaceholder')}
                   />
                </div>
             </div>
 
             <div>
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">Geçici Şifre</label>
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">{t('admin.staff.addForm.password')}</label>
                <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
                   <input 
                     required type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 font-bold text-sm"
-                    placeholder="••••••••"
+                    placeholder={t('admin.staff.addForm.passwordPlaceholder')}
                   />
                </div>
             </div>
 
             <div>
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">Yetki Rolü</label>
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">{t('admin.staff.addForm.role')}</label>
                <select 
                  value={role} onChange={(e) => setRole(e.target.value)}
                  className="w-full px-5 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 font-bold text-sm appearance-none"
                >
-                 <option value="1">Saha Personeli (Role 1)</option>
-                 <option value="2">Mağaza Müdürü (Role 2)</option>
+                 <option value="1">{t('admin.staff.addForm.role1')}</option>
+                 <option value="2">{t('admin.staff.addForm.role2')}</option>
                </select>
             </div>
 
@@ -393,7 +396,7 @@ function StaffManagement({ shopId }: { shopId: string }) {
               type="submit" disabled={loading}
               className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm shadow-xl shadow-slate-200 hover:bg-indigo-600 transition-all active:scale-95 disabled:opacity-50"
             >
-              {loading ? "Hesap Oluşturuluyor..." : "PERSONELİ KAYDET"}
+              {loading ? t('admin.staff.addForm.submitting') : t('admin.staff.addForm.submit')}
             </button>
          </form>
       </div>
@@ -401,17 +404,17 @@ function StaffManagement({ shopId }: { shopId: string }) {
       {/* Sağ: Liste */}
       <div className="lg:col-span-8 bg-white border border-slate-100 rounded-[32px] overflow-hidden shadow-xl shadow-slate-200/50 flex flex-col">
          <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-            <h4 className="font-black text-slate-800 tracking-tight">Mevcut Personel Listesi</h4>
-            <span className="text-[10px] bg-white px-2 py-1 rounded-lg border font-bold text-slate-400">{staffList.length} Kullanıcı</span>
+            <h4 className="font-black text-slate-800 tracking-tight">{t('admin.staff.list.title')}</h4>
+            <span className="text-[10px] bg-white px-2 py-1 rounded-lg border font-bold text-slate-400">{staffList.length} {t('admin.staff.list.userCount')}</span>
          </div>
          
          <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
                <thead>
                   <tr className="text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">
-                     <th className="px-8 py-5">Personel</th>
-                     <th className="px-8 py-5">Yetki Seviyesi</th>
-                     <th className="px-8 py-5 text-right">İşlem</th>
+                     <th className="px-8 py-5">{t('admin.staff.list.headerName')}</th>
+                     <th className="px-8 py-5">{t('admin.staff.list.headerRole')}</th>
+                     <th className="px-8 py-5 text-right">{t('admin.staff.list.headerAction')}</th>
                   </tr>
                </thead>
                <tbody className="divide-y divide-slate-50">
@@ -421,7 +424,7 @@ function StaffManagement({ shopId }: { shopId: string }) {
                      ))
                   ) : staffList.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="px-8 py-20 text-center text-slate-300 italic font-medium">Henüz personel tanımlanmamış.</td>
+                      <td colSpan={3} className="px-8 py-20 text-center text-slate-300 italic font-medium">{t('admin.staff.list.empty')}</td>
                     </tr>
                   ) : staffList.map((s: any) => (
                      <tr 
@@ -442,7 +445,7 @@ function StaffManagement({ shopId }: { shopId: string }) {
                         </td>
                         <td className="px-8 py-5">
                            <span className={`px-2 py-1 rounded-md text-[9px] font-black tracking-tighter ${s.role === 2 ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
-                              {s.role === 2 ? 'MÜDÜR' : 'ÇALIŞAN'}
+                              {s.role === 2 ? t('admin.staff.list.role2') : t('admin.staff.list.role1')}
                            </span>
                         </td>
                         <td className="px-8 py-5 text-right">
@@ -459,7 +462,7 @@ function StaffManagement({ shopId }: { shopId: string }) {
       <SlideOver
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
-        title="Personel Detayı"
+        title={t('admin.staff.detail.title')}
       >
         {selectedStaff && (
           <div className="space-y-8 pb-12">
@@ -473,7 +476,7 @@ function StaffManagement({ shopId }: { shopId: string }) {
                   <p className="text-sm text-slate-400 font-medium">{selectedStaff.email}</p>
                   <div className="mt-2 flex gap-2">
                      <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                        SHOP: {shopId.slice(0, 8)}
+                        {t('admin.staff.detail.shopId')}: {shopId.slice(0, 8)}
                      </span>
                   </div>
                </div>
@@ -483,19 +486,19 @@ function StaffManagement({ shopId }: { shopId: string }) {
             <div className="space-y-4">
                <div className="flex items-center gap-2 px-2">
                   <ShieldAlert size={18} className="text-indigo-600" />
-                  <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider">Yetki ve Rol Yönetimi</h4>
+                  <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider">{t('admin.staff.detail.roleManagement')}</h4>
                </div>
                <div className="bg-white border border-slate-100 rounded-[24px] p-6 shadow-sm flex flex-col sm:flex-row gap-4 items-end">
                   <div className="flex-1 w-full space-y-2">
-                     <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Personel Rolü</label>
+                     <label className="text-[10px] font-black text-slate-400 uppercase ml-2">{t('admin.staff.detail.roleLabel')}</label>
                      <select 
                        value={newRole}
                        onChange={(e) => setNewRole(e.target.value)}
                        className="w-full px-5 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 font-bold text-sm"
                      >
-                       <option value="1">Saha Personeli (Role 1)</option>
-                       <option value="2">Mağaza Müdürü (Role 2)</option>
-                       <option value="3">Patron / Admin (Role 3)</option>
+                       <option value="1">{t('admin.staff.addForm.role1')}</option>
+                       <option value="2">{t('admin.staff.addForm.role2')}</option>
+                       <option value="3">{t('admin.staff.addForm.role3')}</option>
                      </select>
                   </div>
                   <button 
@@ -504,7 +507,7 @@ function StaffManagement({ shopId }: { shopId: string }) {
                     className="whitespace-nowrap px-8 py-3 bg-indigo-600 text-white rounded-2xl font-black text-sm hover:shadow-lg hover:shadow-indigo-100 transition-all active:scale-95 flex items-center gap-2 "
                   >
                     {updatingRole ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save size={18} />}
-                    GÜNCELLE
+                    {t('admin.staff.detail.updateButton')}
                   </button>
                </div>
             </div>
@@ -514,19 +517,19 @@ function StaffManagement({ shopId }: { shopId: string }) {
                <div className="flex items-center justify-between px-2">
                   <div className="flex items-center gap-2">
                     <History size={18} className="text-indigo-600" />
-                    <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider">Personelin Son İşlemleri</h4>
+                    <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider">{t('admin.staff.detail.auditTitle')}</h4>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">Son 10 İşlem</span>
+                  <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">{t('admin.staff.detail.auditLimit')}</span>
                </div>
                
                <div className="bg-white border border-slate-100 rounded-[24px] overflow-hidden shadow-sm">
                   <table className="w-full text-left border-collapse">
                      <thead>
                         <tr className="bg-slate-50/50 text-[9px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-50">
-                           <th className="px-6 py-4">Ürün</th>
-                           <th className="px-6 py-4 text-center">İşlem</th>
-                           <th className="px-6 py-4 text-center">Miktar</th>
-                           <th className="px-6 py-4 text-right">Tarih</th>
+                           <th className="px-6 py-4">{t('admin.staff.detail.auditTable.product')}</th>
+                           <th className="px-6 py-4 text-center">{t('admin.staff.detail.auditTable.type')}</th>
+                           <th className="px-6 py-4 text-center">{t('admin.staff.detail.auditTable.quantity')}</th>
+                           <th className="px-6 py-4 text-right">{t('admin.staff.detail.auditTable.date')}</th>
                         </tr>
                      </thead>
                      <tbody className="divide-y divide-slate-50">
@@ -536,7 +539,7 @@ function StaffManagement({ shopId }: { shopId: string }) {
                            ))
                         ) : staffAudit.length === 0 ? (
                            <tr>
-                              <td colSpan={4} className="px-6 py-12 text-center text-slate-300 italic text-xs font-medium">Hüzünlü sessizlik... Henüz bir işlem yok.</td>
+                              <td colSpan={4} className="px-6 py-12 text-center text-slate-300 italic text-xs font-medium">{t('admin.staff.detail.auditTable.empty')}</td>
                            </tr>
                         ) : staffAudit.map((m: any) => (
                            <tr key={m.id} className="text-xs">
@@ -547,7 +550,7 @@ function StaffManagement({ shopId }: { shopId: string }) {
                                  <div className="flex justify-center">
                                     <span className={`flex items-center gap-1 px-2 py-1 rounded-lg font-black text-[9px] ${m.type === 'IN' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
                                        {m.type === 'IN' ? <ArrowDownRight size={10} /> : <ArrowUpRight size={10} />}
-                                       {m.type === 'IN' ? 'GİRİŞ' : 'ÇIKIŞ'}
+                                       {m.type === 'IN' ? t('admin.staff.detail.auditTable.typeIn') : t('admin.staff.detail.auditTable.typeOut')}
                                     </span>
                                  </div>
                               </td>
@@ -563,7 +566,7 @@ function StaffManagement({ shopId }: { shopId: string }) {
                         <tr className="bg-slate-50/20">
                            <td colSpan={4} className="px-6 py-3 text-center border-t border-dashed border-slate-200">
                               <div className="flex items-center justify-center gap-2 text-[9px] font-black text-slate-300 uppercase tracking-widest">
-                                 <Activity size={12} /> Satış Modülü Entegrasyonu Yakında
+                                 <Activity size={12} /> {t('admin.staff.detail.auditTable.integrationSoon')}
                               </div>
                            </td>
                         </tr>
@@ -581,7 +584,7 @@ function StaffManagement({ shopId }: { shopId: string }) {
                  }}
                  className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-rose-50 text-rose-500 font-black text-xs hover:bg-rose-100 transition-all border border-rose-100/50"
                >
-                 <Trash2 size={16} /> PERSONELİ SİSTEMDEN KALDIR
+                 <Trash2 size={16} /> {t('admin.staff.detail.deleteButton')}
                </button>
             </div>
           </div>

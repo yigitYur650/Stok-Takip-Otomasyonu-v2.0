@@ -26,6 +26,9 @@ yarn-debug.log*
 yarn-error.log*
 ts_errors.txt
 ts_errors_utf8.txt
+test-results/
+playwright-report/
+tmp_test.ts
 
 # Editor / IDE
 .vscode/

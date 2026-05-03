@@ -57,7 +57,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <span className="font-bold text-xl tracking-tight text-white/95">SaaS ERP</span>
           </div>
           
-          <div className="flex items-center" title={isConnected ? "Bağlantı Başarılı" : isConnected === false ? "Bağlantı Koptu / Sandbox" : "Bağlanıyor..."}>
+          <div className="flex items-center" title={isConnected ? t('layout.connection.success') : isConnected === false ? t('layout.connection.error') : t('layout.connection.connecting')}>
             {isConnected === true && <Wifi size={18} className="text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]" />}
             {isConnected === false && <WifiOff size={18} className="text-rose-400 drop-shadow-[0_0_8px_rgba(251,113,133,0.8)]" />}
             {isConnected === null && <div className="w-4 h-4 rounded-full border-2 border-slate-400 border-t-white animate-spin"></div>}
@@ -72,7 +72,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               </div>
               <div className="flex-1 truncate">
                 <span className="text-sm font-semibold text-slate-200 truncate block">{profile.full_name}</span>
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider">{role}</span>
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider">{t(`roles.${role}`)}</span>
               </div>
             </div>
           </div>

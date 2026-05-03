@@ -8,11 +8,13 @@ const languages = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' }
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'ja', name: '日本語', flag: '🇯🇵' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' }
 ];
 
 export function LanguageSwitcher() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
@@ -57,7 +59,7 @@ export function LanguageSwitcher() {
             >
               <div className="p-2 mb-2">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">
-                  Dili Değiştir
+                  {t('layout.switcher.title')}
                 </p>
               </div>
               

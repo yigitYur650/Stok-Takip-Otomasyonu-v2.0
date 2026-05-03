@@ -186,14 +186,14 @@ export class ProductService implements IProductService {
   }
 
   /**
-   * Varyantı siler (Soft Delete).
+   * Varyantı siler (Soft Delete via RPC - RLS bypass).
    */
   async deleteVariant(id: string): Promise<void> {
     console.log(`🗑️ DeleteVariant attempt - ID: ${id}`);
-    const { error } = await this.supabase
-      .from('product_variants')
-      .update({ deleted_at: new Date().toISOString() } as any)
-      .eq('id', id);
+    // @ts-ignore
+    const { error } = await this.supabase.rpc('soft_delete_variant', {
+      p_variant_id: id
+    });
     if (error) {
       console.error("❌ DeleteVariant error:", error);
       throw error;

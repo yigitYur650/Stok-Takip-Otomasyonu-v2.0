@@ -4,8 +4,10 @@ import { useRefresh } from '../components/RefreshContext';
 import { PageTransition } from '../components/PageTransition';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { LayoutDashboard, Package, TrendingUp, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function Dashboard() {
+  const { t } = useTranslation();
   const { analyticsService, productService } = useServices();
   const { refreshKey } = useRefresh();
   const [stats, setStats] = useState<any>(null);
@@ -30,7 +32,7 @@ export function Dashboard() {
         console.log("Dashboard: Stats fetched successfully.");
       } catch (err) {
         console.error("Dashboard Load Error:", err);
-        setError("Veriler yüklenirken bir hata oluştu.");
+        setError(t('dashboard.error'));
       } finally {
         setLoading(false);
       }
@@ -42,7 +44,7 @@ export function Dashboard() {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="text-slate-500 font-medium animate-pulse">İstatistikler hazırlanıyor...</p>
+        <p className="text-slate-500 font-medium animate-pulse">{t('dashboard.loading')}</p>
       </div>
     );
   }
@@ -53,28 +55,28 @@ export function Dashboard() {
         <div className="bg-rose-50 text-rose-500 p-4 rounded-full">
           <AlertTriangle size={48} />
         </div>
-        <h2 className="text-xl font-bold text-slate-800">Veri Yüklenemedi</h2>
+        <h2 className="text-xl font-bold text-slate-800">{t('dashboard.errorTitle')}</h2>
         <p className="text-slate-500 max-w-sm">{error}</p>
         <button 
           onClick={() => window.location.reload()}
           className="mt-4 px-6 py-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-colors"
         >
-          Tekrar Dene
+          {t('dashboard.retry')}
         </button>
       </div>
     );
   }
 
   const chartData = stats?.topSelling?.map((item: any) => ({
-    name: item.product_name || item.sku || 'Bilinmeyen',
+    name: item.product_name || item.sku || t('common.unknown'),
     satis: item.total_quantity_sold || item.total_revenue || 0
   })) || [];
 
   return (
     <PageTransition>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard</h1>
-        <p className="text-sm text-slate-500 mt-1">Hoş geldiniz, işte bugünkü ticaret özetiniz.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">{t('dashboard.title')}</h1>
+        <p className="text-sm text-slate-500 mt-1">{t('dashboard.subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -83,7 +85,7 @@ export function Dashboard() {
             <TrendingUp size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Günlük Ciro</p>
+            <p className="text-sm font-medium text-slate-500">{t('dashboard.dailyRevenue')}</p>
             <h3 className="text-2xl font-bold text-slate-800">₺{stats?.todayRevenue?.toLocaleString() || '0'}</h3>
           </div>
         </div>
@@ -93,7 +95,7 @@ export function Dashboard() {
             <LayoutDashboard size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Kayıtlı Ürün</p>
+            <p className="text-sm font-medium text-slate-500">{t('dashboard.registeredProducts')}</p>
             <h3 className="text-2xl font-bold text-slate-800">{productCount}</h3>
           </div>
         </div>
@@ -103,7 +105,7 @@ export function Dashboard() {
             <Package size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Satış Sayısı</p>
+            <p className="text-sm font-medium text-slate-500">{t('dashboard.saleCount')}</p>
             <h3 className="text-2xl font-bold text-slate-800">{stats?.totalSalesToday || '0'}</h3>
           </div>
         </div>
@@ -113,8 +115,8 @@ export function Dashboard() {
             <AlertTriangle size={24} />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Kritik Stok</p>
-            <h3 className="text-2xl font-bold text-slate-800">{stats?.lowStockItems?.length || '0'} Ürün</h3>
+            <p className="text-sm font-medium text-slate-500">{t('dashboard.criticalStock')}</p>
+            <h3 className="text-2xl font-bold text-slate-800">{stats?.lowStockItems?.length || '0'} {t('dashboard.unitProduct')}</h3>
           </div>
         </div>
       </div>
@@ -122,7 +124,7 @@ export function Dashboard() {
       <div className="glass rounded-2xl p-6 shadow-xl shadow-slate-200/40 border border-white/50">
         <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
           <TrendingUp size={20} className="text-blue-500"/>
-          Satış Performansı (Çok Satan Varyantlar)
+          {t('dashboard.performanceTitle')}
         </h2>
         <div className="h-80 w-full">
           {chartData.length > 0 ? (
@@ -139,7 +141,7 @@ export function Dashboard() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex h-full items-center justify-center text-slate-400 font-medium">Yeterli veri yok</div>
+            <div className="flex h-full items-center justify-center text-slate-400 font-medium">{t('dashboard.noData')}</div>
           )}
         </div>
       </div>

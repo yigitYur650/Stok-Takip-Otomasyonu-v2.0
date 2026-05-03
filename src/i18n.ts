@@ -8,6 +8,8 @@ import en from './locales/en.json';
 import de from './locales/de.json';
 import es from './locales/es.json';
 import fr from './locales/fr.json';
+import ja from './locales/ja.json';
+import it from './locales/it.json';
 
 i18n
   .use(LanguageDetector) // Tarayıcı dilini algıla
@@ -18,7 +20,9 @@ i18n
       en: { translation: en },
       de: { translation: de },
       es: { translation: es },
-      fr: { translation: fr }
+      fr: { translation: fr },
+      ja: { translation: ja },
+      it: { translation: it }
     },
     fallbackLng: 'en', // Dil bulunamazsa varsayılan dil
     debug: false,

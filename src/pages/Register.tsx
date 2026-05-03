@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, UserPlus, Building2, User, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useTranslation } from 'react-i18next';
 
 export const Register: React.FC = () => {
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState('');
   const [shopName, setShopName] = useState('');
   const [email, setEmail] = useState('');
@@ -44,7 +46,7 @@ export const Register: React.FC = () => {
         navigate('/');
       }
     } catch (err: any) {
-      setError(err.message || 'Kayıt sırasında bir hata oluştu');
+      setError(err.message || t('auth.register.error'));
     } finally {
       setIsLoading(false);
     }
@@ -64,8 +66,8 @@ export const Register: React.FC = () => {
              <div className="w-16 h-16 mx-auto bg-gradient-to-tr from-purple-600 to-rose-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-purple-500/40 border border-white/20">
                <span className="font-bold text-3xl tracking-tight text-white">S</span>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Erp Dükkanınızı Kurun</h1>
-            <p className="text-slate-400 text-sm">Satış, envanter ve analizler için sisteme katılın.</p>
+            <h1 className="text-2xl font-bold text-white mb-2">{t('auth.register.title')}</h1>
+            <p className="text-slate-400 text-sm">{t('auth.register.subtitle')}</p>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-5">
@@ -87,7 +89,7 @@ export const Register: React.FC = () => {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full bg-black/20 border border-white/10 text-white placeholder-slate-500 text-sm rounded-2xl pl-11 pr-4 py-3.5 outline-none focus:border-purple-500/50 focus:bg-purple-500/5 transition-all"
-                  placeholder="Adınız Soyadınız"
+                  placeholder={t('auth.register.fullNamePlaceholder')}
                   required
                 />
               </div>
@@ -101,7 +103,7 @@ export const Register: React.FC = () => {
                   value={shopName}
                   onChange={(e) => setShopName(e.target.value)}
                   className="w-full bg-black/20 border border-white/10 text-white placeholder-slate-500 text-sm rounded-2xl pl-11 pr-4 py-3.5 outline-none focus:border-purple-500/50 focus:bg-purple-500/5 transition-all"
-                  placeholder="Mağaza / Şirket Adı"
+                  placeholder={t('auth.register.shopNamePlaceholder')}
                   required
                 />
               </div>
@@ -115,7 +117,7 @@ export const Register: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-black/20 border border-white/10 text-white placeholder-slate-500 text-sm rounded-2xl pl-11 pr-4 py-3.5 outline-none focus:border-purple-500/50 focus:bg-purple-500/5 transition-all"
-                  placeholder="E-posta adresiniz"
+                  placeholder={t('auth.register.emailPlaceholder')}
                   required
                 />
               </div>
@@ -129,7 +131,7 @@ export const Register: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-black/20 border border-white/10 text-white placeholder-slate-500 text-sm rounded-2xl pl-11 pr-4 py-3.5 outline-none focus:border-purple-500/50 focus:bg-purple-500/5 transition-all"
-                  placeholder="Güvenli şifreniz"
+                  placeholder={t('auth.register.passwordPlaceholder')}
                   required
                 />
               </div>
@@ -145,16 +147,16 @@ export const Register: React.FC = () => {
               ) : (
                 <>
                   <UserPlus size={20} />
-                  Ücretsiz Patron Hesabı Oluştur
+                  {t('auth.register.button')}
                 </>
               )}
             </button>
           </form>
 
           <div className="mt-8 text-center text-sm text-slate-400">
-            Zaten bir hesabınız var mı?{' '}
+            {t('auth.register.hasAccount')}{' '}
             <Link to="/login" className="text-white font-medium hover:underline decoration-purple-500 underline-offset-4">
-              Giriş Yapın
+              {t('auth.register.loginNow')}
             </Link>
           </div>
         </div>

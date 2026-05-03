@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, LogIn, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useTranslation } from 'react-i18next';
 
 export const Login: React.FC = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -33,7 +35,7 @@ export const Login: React.FC = () => {
         navigate('/');
       }
     } catch (err: any) {
-      setError(err.message || 'Giriş sırasında bir hata oluştu');
+      setError(err.message || t('auth.login.error'));
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +52,7 @@ export const Login: React.FC = () => {
       if (error) throw error;
       setResetSent(true);
     } catch (err: any) {
-      setError(err.message || 'Sıfırlama e-postası gönderilirken hata oluştu');
+      setError(err.message || t('auth.forgot.error'));
     } finally {
       setIsLoading(false);
     }
@@ -63,20 +65,20 @@ export const Login: React.FC = () => {
         <div className="w-full max-w-md p-8 relative z-10">
           <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/10 rounded-[32px] p-8 shadow-2xl">
             <div className="mb-8 text-center">
-              <h2 className="text-2xl font-black text-white mb-2 tracking-tight">Şifrenizi mi Unuttunuz?</h2>
-              <p className="text-slate-400 text-sm font-medium">E-posta adresinizi girin, size bir sıfırlama bağlantısı gönderelim.</p>
+              <h2 className="text-2xl font-black text-white mb-2 tracking-tight">{t('auth.forgot.title')}</h2>
+              <p className="text-slate-400 text-sm font-medium">{t('auth.forgot.subtitle')}</p>
             </div>
 
             {resetSent ? (
               <div className="space-y-6 text-center">
                 <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-400 text-sm font-bold">
-                  ✅ Şifre sıfırlama bağlantısı e-posta adresinize gönderildi. Lütfen gelen kutunuzu kontrol edin.
+                  {t('auth.forgot.success')}
                 </div>
                 <button 
                   onClick={() => setShowForgot(false)}
                   className="w-full py-4 bg-white text-slate-900 font-black rounded-2xl hover:bg-slate-100 transition-all"
                 >
-                  GİRİŞ EKRANINA DÖN
+                  {t('auth.forgot.backToLogin')}
                 </button>
               </div>
             ) : (
@@ -92,20 +94,20 @@ export const Login: React.FC = () => {
                   <input
                     type="email" required value={resetEmail} onChange={(e) => setResetEmail(e.target.value)}
                     className="w-full bg-black/20 border border-white/10 text-white placeholder-slate-500 text-sm rounded-2xl pl-11 pr-4 py-4 outline-none focus:border-blue-500/50 transition-all font-bold"
-                    placeholder="E-posta adresiniz"
+                    placeholder={t('auth.forgot.emailPlaceholder') || t('auth.login.emailPlaceholder')}
                   />
                 </div>
                 <button
                   type="submit" disabled={isLoading}
                   className="w-full bg-white text-slate-900 font-black py-4 rounded-2xl shadow-xl hover:shadow-white/10 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                   {isLoading ? "Gönderiliyor..." : "SIFIRLAMA BAĞLANTISI GÖNDER"}
+                   {isLoading ? t('auth.forgot.sending') : t('auth.forgot.sendButton')}
                 </button>
                 <button 
                   type="button" onClick={() => setShowForgot(false)}
                   className="w-full text-sm text-slate-400 font-bold hover:text-white transition-colors"
                 >
-                  Giriş Ekranına Dön
+                  {t('auth.login.backToLogin') || t('auth.forgot.backToLogin')}
                 </button>
               </form>
             )}
@@ -129,8 +131,8 @@ export const Login: React.FC = () => {
             <div className="w-16 h-16 mx-auto bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/40 border border-white/20">
                <span className="font-bold text-3xl tracking-tight text-white">S</span>
             </div>
-            <h1 className="text-3xl font-black text-white mb-2 tracking-tight">Giriş Yap</h1>
-            <p className="text-slate-400 text-sm font-medium">SaaS ERP sisteminize güvenle erişin.</p>
+            <h1 className="text-3xl font-black text-white mb-2 tracking-tight">{t('auth.login.title')}</h1>
+            <p className="text-slate-400 text-sm font-medium">{t('auth.login.subtitle')}</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
@@ -151,7 +153,7 @@ export const Login: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-black/20 border border-white/10 text-white placeholder-slate-500 text-sm rounded-2xl pl-11 pr-4 py-4 outline-none focus:border-blue-500/50 focus:bg-blue-500/5 transition-all w-full font-bold"
-                  placeholder="E-posta adresiniz"
+                  placeholder={t('auth.login.emailPlaceholder')}
                   required
                 />
               </div>
@@ -166,7 +168,7 @@ export const Login: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-black/20 border border-white/10 text-white placeholder-slate-500 text-sm rounded-2xl pl-11 pr-4 py-4 outline-none focus:border-blue-500/50 focus:bg-blue-500/5 transition-all w-full font-bold"
-                    placeholder="Şifreniz"
+                    placeholder={t('auth.login.passwordPlaceholder')}
                     required
                   />
                 </div>
@@ -175,7 +177,7 @@ export const Login: React.FC = () => {
                      type="button" onClick={() => setShowForgot(true)}
                      className="text-xs font-bold text-slate-400 hover:text-white transition-colors"
                    >
-                     Şifremi Unuttum?
+                     {t('auth.login.forgotPassword')}
                    </button>
                 </div>
               </div>
@@ -191,16 +193,16 @@ export const Login: React.FC = () => {
               ) : (
                 <>
                   <LogIn size={20} />
-                  GİRİŞ YAP
+                  {t('auth.login.button')}
                 </>
               )}
             </button>
           </form>
 
           <div className="mt-10 text-center text-sm text-slate-400 font-medium">
-            Hesabınız yok mu?{' '}
+            {t('auth.login.noAccount')}{' '}
             <Link to="/register" className="text-white font-black hover:text-blue-400 transition-colors">
-              Hemen Kayıt Ol
+              {t('auth.login.registerNow')}
             </Link>
           </div>
         </div>

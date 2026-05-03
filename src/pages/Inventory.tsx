@@ -11,8 +11,10 @@ import { useMasterData } from '../context/MasterDataContext';
 import { useAuth } from '../context/AuthContext';
 import { pdfService } from '../services/pdfService';
 import { FileText } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function Inventory() {
+  const { t } = useTranslation();
   const { productService, stockService } = useServices();
   const { refreshKey, triggerRefresh } = useRefresh();
   const { categories, colors, sizes } = useMasterData();
@@ -50,8 +52,7 @@ export function Inventory() {
         }
         setProducts(pl);
       } catch (err) {
-        console.error("❌ Inventory Fetch Error:", err);
-        setErrorMsg("Ürün verileri sunucudan çekilemedi.");
+        setErrorMsg(t('inventory.product.noProductFound'));
       } finally {
         setLoading(false);
       }
@@ -64,7 +65,7 @@ export function Inventory() {
     }, delay);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [productService, refreshKey, searchQuery]);
+  }, [productService, refreshKey, searchQuery, t]);
 
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
@@ -76,7 +77,7 @@ export function Inventory() {
   }, [products, selectedCat, selectedColor, selectedSize]);
 
   const handleEdit = (product: any) => {
-    if (profile?.role !== 3) return alert("Sadece Yönetici (Patron) ürün detaylarını düzenleyebilir.");
+    if (profile?.role !== 3) return alert(t('inventory.product.editNoAuth'));
     setEditingProduct(product);
     setIsProductFormOpen(true);
   };
@@ -87,14 +88,13 @@ export function Inventory() {
   };
 
   const handleDelete = async (id: string) => {
-    if (profile?.role !== 3) return alert("Silme yetkiniz yok.");
-    if (confirm("Bu ürün silinecektir. Emin misiniz?")) {
+    if (profile?.role !== 3) return alert(t('inventory.product.deleteNoAuth'));
+    if (confirm(t('inventory.product.deleteConfirm'))) {
       try {
         await productService.deleteProduct(id);
         triggerRefresh();
       } catch(err: any) {
-        console.error("❌ Envanter Silme Hatası:", err);
-        alert(err.message || "Silinirken hata oluştu");
+        alert(err.message || t('inventory.stockModal.error'));
       }
     }
   };
@@ -116,8 +116,8 @@ export function Inventory() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 border-l-4 border-indigo-600 pl-4">Envanter Takibi</h1>
-          <p className="text-sm text-slate-500 mt-1 pl-4">Sistem genelindeki stok hareketlerini ve ürünleri yönetin.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 border-l-4 border-indigo-600 pl-4">{t('inventory.title')}</h1>
+          <p className="text-sm text-slate-500 mt-1 pl-4">{t('inventory.subtitle')}</p>
         </div>
         
         {profile?.role === 3 && (
@@ -126,19 +126,19 @@ export function Inventory() {
               onClick={() => pdfService.generateInventoryReport(products, profile?.shops?.name)}
               className="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-6 py-3 rounded-2xl font-bold text-sm transition-all border border-emerald-200 shadow-sm"
             >
-              <FileText size={18} /> Rapor Al (PDF)
+              <FileText size={18} /> {t('inventory.buttons.report')}
             </button>
             <button 
               onClick={() => setIsCategoryManagerOpen(true)}
               className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-6 py-3 rounded-2xl font-bold text-sm transition-all border border-slate-200 shadow-sm"
             >
-              <Folders size={18} className="text-indigo-600" /> Kategorileri Yönet
+              <Folders size={18} className="text-indigo-600" /> {t('inventory.buttons.manageCategories')}
             </button>
             <button 
               onClick={() => { setEditingProduct(null); setIsProductFormOpen(true); }}
               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-bold text-sm transition-all shadow-xl shadow-indigo-200 group"
             >
-              <Plus size={18} /> Yeni Ürün Tanımla
+              <Plus size={18} /> {t('inventory.buttons.addNew')}
             </button>
           </div>
         )}
@@ -149,7 +149,7 @@ export function Inventory() {
         <div className="flex-1 relative">
            <input
              type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-             placeholder="Ürün Ara..."
+             placeholder={t('inventory.filters.searchPlaceholder')}
              className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white border border-slate-200 focus:ring-2 focus:ring-indigo-500 font-medium text-slate-800 transition-all shadow-sm"
            />
            <Folders className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -159,17 +159,17 @@ export function Inventory() {
              value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)}
              className="bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-600"
            >
-             <option value="">Tüm Kategoriler</option>
+             <option value="">{t('inventory.filters.allCategories')}</option>
              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
            </select>
            <select 
              value={selectedColor} onChange={(e) => setSelectedColor(e.target.value)}
              className="bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-600"
            >
-             <option value="">Renk</option>
+             <option value="">{t('inventory.filters.color')}</option>
              {colors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
            </select>
-           <button onClick={resetFilters} className="p-3 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100 transition-colors"><X size={18} /></button>
+           <button onClick={resetFilters} title={t('inventory.filters.reset')} className="p-3 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100 transition-colors"><X size={18} /></button>
         </div>
       </div>
 
@@ -185,7 +185,7 @@ export function Inventory() {
               <div key={p.id} className="bg-white rounded-3xl p-7 shadow-sm border border-slate-100 hover:shadow-2xl hover:shadow-indigo-100 transition-all group flex flex-col">
                 <div className="flex justify-between items-start mb-4">
                   <span className="text-[10px] font-black uppercase tracking-tighter bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md leading-none">
-                    {p.categories?.name || 'Genel'}
+                    {p.categories?.name || t('inventory.product.noCategory')}
                   </span>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {profile?.role === 3 && (
@@ -213,7 +213,7 @@ export function Inventory() {
                           <button 
                             onClick={() => openStockModal({ ...v, shop_id: p.shop_id }, p.name)}
                             className="p-2 bg-white rounded-xl shadow-sm hover:bg-indigo-600 hover:text-white transition-all scale-90 hover:scale-100"
-                            title="Stok Giriş/Çıkış"
+                            title={t('inventory.product.stockAction')}
                           >
                             <Activity size={14} />
                           </button>
@@ -227,9 +227,9 @@ export function Inventory() {
                     onClick={() => handleEdit(p)}
                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all ${profile?.role === 3 ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
                     disabled={profile?.role !== 3}
-                    title={profile?.role !== 3 ? "Sadece Admin erişebilir" : ""}
+                    title={profile?.role !== 3 ? t('inventory.product.adminOnly') : ""}
                   >
-                    <Edit3 size={16} /> Detay / Düzenle
+                    <Edit3 size={16} /> {t('inventory.product.details')}
                   </button>
                   <button 
                     onClick={() => {
@@ -240,7 +240,7 @@ export function Inventory() {
                     }}
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-all border border-indigo-100"
                   >
-                    <Activity size={16} /> Stok İşlemi
+                    <Activity size={16} /> {t('inventory.product.stockAction')}
                   </button>
                 </div>
               </div>
@@ -249,7 +249,7 @@ export function Inventory() {
         ) : (
           <div className="flex flex-col items-center justify-center py-20 text-slate-300 italic font-medium">
             <Filter size={48} className="mb-4 opacity-20" />
-            Eşleşen ürün bulunamadı.
+            {t('inventory.product.noProductFound')}
           </div>
         )}
       </div>
@@ -258,7 +258,7 @@ export function Inventory() {
       <SlideOver 
         isOpen={isProductFormOpen} 
         onClose={handleCloseForm}
-        title={editingProduct ? "Ürün Düzenleme (Admin)" : "Yeni Ürün Tanımı"}
+        title={editingProduct ? t('productForm.titleEdit') : t('productForm.titleNew')}
       >
         <ProductForm 
           onClose={handleCloseForm} 
@@ -270,7 +270,7 @@ export function Inventory() {
       <SlideOver
         isOpen={isCategoryManagerOpen}
         onClose={() => setIsCategoryManagerOpen(false)}
-        title="Kategori Yönetimi"
+        title={t('categoryManager.title')}
       >
         <CategoryManager />
       </SlideOver>
@@ -289,6 +289,7 @@ export function Inventory() {
 
 // Yeni: Stok Hareketi Modalı
 function StockMovementModal({ variant, onClose, onSuccess }: { variant: any, onClose: () => void, onSuccess: () => void }) {
+  const { t } = useTranslation();
   const { stockService } = useServices();
   const { profile, user } = useAuth();
   
@@ -303,7 +304,7 @@ function StockMovementModal({ variant, onClose, onSuccess }: { variant: any, onC
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const qtyNum = parseInt(quantity);
-    if (!qtyNum || qtyNum <= 0) return alert("Geçerli bir miktar girin.");
+    if (!qtyNum || qtyNum <= 0) return alert(t('inventory.stockModal.quantityError'));
     
     setLoading(true);
     try {
@@ -311,18 +312,18 @@ function StockMovementModal({ variant, onClose, onSuccess }: { variant: any, onC
       const newStock = type === 'IN' ? prevStock + qtyNum : prevStock - qtyNum;
 
       if (type === 'OUT' && newStock < 0) {
-        if (!confirm("Dikkat: Bu işlem stok miktarını eksiye düşürecektir. Devam etmek istiyor musunuz?")) {
+        if (!confirm(t('inventory.stockModal.negativeStockWarning'))) {
            setLoading(false);
            return;
         }
       }
 
       const movementPayload = {
-        variant_id: String(currentVariant.id), // KESİNLİKLE variant id
+        variant_id: String(currentVariant.id),
         shop_id: String(currentVariant.shop_id || profile?.shop_id || ''),
-        type: type.toUpperCase(), // KESİNLİKLE 'IN' veya 'OUT'
+        type: type.toUpperCase(),
         quantity: parseInt(String(qtyNum), 10),
-        user_email: String(user?.email || 'Bilinmeyen'), 
+        user_email: String(user?.email || t('categoryManager.history.system')), 
         previous_stock: parseInt(String(prevStock), 10),
         new_stock: parseInt(String(newStock), 10)
       };
@@ -330,8 +331,7 @@ function StockMovementModal({ variant, onClose, onSuccess }: { variant: any, onC
       await stockService.addStockMovement(movementPayload);
       onSuccess();
     } catch (err) {
-      console.error(err);
-      alert("İşlem başarısız.");
+      alert(t('inventory.stockModal.error'));
     } finally {
       setLoading(false);
     }
@@ -342,7 +342,7 @@ function StockMovementModal({ variant, onClose, onSuccess }: { variant: any, onC
       <div className="bg-white rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden border border-slate-100 flex flex-col">
         <div className="p-6 bg-slate-900 text-white flex justify-between items-center">
            <div>
-             <h3 className="font-bold">Stok Operasyonu</h3>
+             <h3 className="font-bold">{t('inventory.stockModal.title')}</h3>
              <p className="text-[10px] text-slate-400 uppercase tracking-widest">{variant.productName}</p>
            </div>
            <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full transition-colors"><X size={20} /></button>
@@ -352,7 +352,7 @@ function StockMovementModal({ variant, onClose, onSuccess }: { variant: any, onC
            {/* Varyant Seçici (Eğer birden fazla varyant varsa) */}
            {allVariants.length > 1 && (
              <div className="space-y-2">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Varyant Seçimi</label>
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-2">{t('inventory.stockModal.variantSelection')}</label>
                <select 
                  value={currentVariant.id}
                  onChange={(e) => setCurrentVariant(allVariants.find((v: any) => v.id === e.target.value))}
@@ -360,7 +360,7 @@ function StockMovementModal({ variant, onClose, onSuccess }: { variant: any, onC
                >
                  {allVariants.map((v: any) => (
                    <option key={v.id} value={v.id}>
-                     {v.colors?.name} / {v.sizes?.name} (Mevcut: {v.stock_quantity})
+                     {v.colors?.name} / {v.sizes?.name} ({t('inventory.product.stock')}: {v.stock_quantity})
                    </option>
                  ))}
                </select>
@@ -375,7 +375,7 @@ function StockMovementModal({ variant, onClose, onSuccess }: { variant: any, onC
                <div className={`p-2 rounded-xl mb-2 ${type === 'IN' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
                  <ArrowDownRight size={24} />
                </div>
-               <span className={`text-xs font-black ${type === 'IN' ? 'text-emerald-600' : 'text-slate-400'}`}>STOK EKLE</span>
+               <span className={`text-xs font-black ${type === 'IN' ? 'text-emerald-600' : 'text-slate-400'}`}>{t('inventory.stockModal.addStock')}</span>
              </button>
              <button 
                type="button" onClick={() => setType('OUT')}
@@ -384,32 +384,32 @@ function StockMovementModal({ variant, onClose, onSuccess }: { variant: any, onC
                <div className={`p-2 rounded-xl mb-2 ${type === 'OUT' ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
                  <ArrowUpRight size={24} />
                </div>
-               <span className={`text-xs font-black ${type === 'OUT' ? 'text-rose-600' : 'text-slate-400'}`}>STOK DÜŞ</span>
+               <span className={`text-xs font-black ${type === 'OUT' ? 'text-rose-600' : 'text-slate-400'}`}>{t('inventory.stockModal.removeStock')}</span>
              </button>
            </div>
 
            <div className="space-y-4">
              <div>
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-2">İşlem Miktarı</label>
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-2">{t('inventory.stockModal.quantity')}</label>
                <div className="relative">
                  <input 
                    required type="number" min="1" value={quantity} onChange={(e) => setQuantity(e.target.value)}
                    className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-indigo-500 text-2xl font-black text-slate-800"
                    placeholder="0"
                  />
-                 <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">ADET</div>
+                 <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">{t('inventory.stockModal.unit')}</div>
                </div>
              </div>
              
              {/* Bilgilendirme */}
              <div className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between">
-                <div className="text-[10px] font-bold text-slate-400">MEVCUT STOK</div>
-                <div className="text-sm font-black text-slate-700">{currentVariant.stock_quantity}</div>
-                <div className="text-slate-300">→</div>
-                <div className="text-[10px] font-bold text-slate-400">YENİ STOK</div>
-                <div className={`text-sm font-black ${type === 'IN' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {type === 'IN' ? (currentVariant.stock_quantity + (parseInt(quantity) || 0)) : (currentVariant.stock_quantity - (parseInt(quantity) || 0))}
-                </div>
+                 <div className="text-[10px] font-bold text-slate-400">{t('inventory.stockModal.currentStock')}</div>
+                 <div className="text-sm font-black text-slate-700">{currentVariant.stock_quantity}</div>
+                 <div className="text-slate-300">→</div>
+                 <div className="text-[10px] font-bold text-slate-400">{t('inventory.stockModal.newStock')}</div>
+                 <div className={`text-sm font-black ${type === 'IN' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                   {type === 'IN' ? (currentVariant.stock_quantity + (parseInt(quantity) || 0)) : (currentVariant.stock_quantity - (parseInt(quantity) || 0))}
+                 </div>
              </div>
            </div>
 
@@ -418,7 +418,7 @@ function StockMovementModal({ variant, onClose, onSuccess }: { variant: any, onC
                type="button" onClick={onClose}
                className="flex-1 py-4 text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-2xl transition-colors"
              >
-               İptal
+               {t('inventory.stockModal.cancel')}
              </button>
              <button 
                type="submit" disabled={loading}
@@ -427,7 +427,7 @@ function StockMovementModal({ variant, onClose, onSuccess }: { variant: any, onC
                {loading ? (
                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                ) : (
-                 <>ONAYLA</>
+                 <>{t('inventory.stockModal.confirm')}</>
                )}
              </button>
            </div>

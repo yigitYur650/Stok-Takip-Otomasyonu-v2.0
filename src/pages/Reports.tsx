@@ -21,6 +21,7 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import { useServices } from '../components/ServiceProvider';
+import { useTranslation } from 'react-i18next';
 import { 
   DateRange, 
   FinancialSummary, 
@@ -29,7 +30,10 @@ import {
 } from '../services/interfaces/IServices';
 
 export function Reports() {
+  const { t, i18n } = useTranslation();
   const { analyticsService } = useServices();
+  
+  const currentLocale = i18n.language === 'tr' ? 'tr-TR' : 'en-US';
   
   const [range, setRange] = useState<DateRange>('daily');
   const [loading, setLoading] = useState(true);
@@ -66,10 +70,10 @@ export function Reports() {
   }, [range, analyticsService]);
 
   const filterButtons: { label: string; value: DateRange }[] = [
-    { label: 'Günlük', value: 'daily' },
-    { label: 'Haftalık', value: 'weekly' },
-    { label: 'Aylık', value: 'monthly' },
-    { label: 'Yıllık', value: 'yearly' },
+    { label: t('reports.filters.daily'), value: 'daily' },
+    { label: t('reports.filters.weekly'), value: 'weekly' },
+    { label: t('reports.filters.monthly'), value: 'monthly' },
+    { label: t('reports.filters.yearly'), value: 'yearly' },
   ];
 
   if (loading && !summary) {
@@ -102,9 +106,9 @@ export function Reports() {
             <span className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
               <BarChart2 size={28} />
             </span>
-            Gelişmiş Analizler
+            {t('reports.title')}
           </h1>
-          <p className="text-slate-500 mt-1">İşletmenizin performansını detaylı olarak inceleyin.</p>
+          <p className="text-slate-500 mt-1">{t('reports.subtitle')}</p>
         </div>
 
         <div className="bg-slate-100 p-1 rounded-xl flex self-start md:self-center">
@@ -127,30 +131,30 @@ export function Reports() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard 
-          title="Toplam Ciro" 
-          value={`${summary?.totalRevenue.toLocaleString('tr-TR')} ₺`}
+          title={t('reports.kpi.totalRevenue')} 
+          value={`${summary?.totalRevenue.toLocaleString(currentLocale)} ₺`}
           icon={<TrendingUp className="text-indigo-600" size={24} />}
           color="bg-indigo-50"
           loading={loading}
         />
         <KPICard 
-          title="Ödeme Dağılımı" 
-          value={summary?.paymentMethods[0]?.method || 'Nakit'}
-          subValue={`${summary?.paymentMethods[0]?.amount.toLocaleString('tr-TR')} ₺`}
+          title={t('reports.kpi.paymentDistribution')} 
+          value={summary?.paymentMethods[0]?.method || t('sales.checkout.paymentMethods.cash')}
+          subValue={`${summary?.paymentMethods[0]?.amount.toLocaleString(currentLocale)} ₺`}
           icon={<CreditCard className="text-purple-600" size={24} />}
           color="bg-purple-50"
           loading={loading}
         />
         <KPICard 
-          title="Toplam İade" 
-          value={`${summary?.totalRefunds.toLocaleString('tr-TR')} ₺`}
+          title={t('reports.kpi.totalRefund')} 
+          value={`${summary?.totalRefunds.toLocaleString(currentLocale)} ₺`}
           icon={<RotateCcw className="text-rose-600" size={24} />}
           color="bg-rose-50"
           loading={loading}
         />
         <KPICard 
-          title="Net Kâr" 
-          value={`${summary?.netProfit.toLocaleString('tr-TR')} ₺`}
+          title={t('reports.kpi.netProfit')} 
+          value={`${summary?.netProfit.toLocaleString(currentLocale)} ₺`}
           icon={<PieChart className="text-emerald-600" size={24} />}
           color="bg-emerald-50"
           loading={loading}
@@ -160,8 +164,8 @@ export function Reports() {
       {/* Main Chart */}
       <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-8">
-          <h3 className="text-xl font-bold text-slate-800">Satış Trendleri</h3>
-          <div className="text-sm text-slate-400 font-medium">Satış Tutarı (₺)</div>
+          <h3 className="text-xl font-bold text-slate-800">{t('reports.charts.salesTrends')}</h3>
+          <div className="text-sm text-slate-400 font-medium">{t('reports.charts.amountLabel')}</div>
         </div>
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -202,48 +206,48 @@ export function Reports() {
       {/* Accordion Lists */}
       <div className="space-y-4">
         <AccordionItem 
-          title="En Çok Satan Ürünler" 
+          title={t('reports.performance.topSelling')} 
           icon={<Package className="text-indigo-600" />}
           isOpen={openAccordion === 'top'}
           onToggle={() => setOpenAccordion(openAccordion === 'top' ? null : 'top')}
         >
           <div className="divide-y divide-slate-100">
-            {performance.topSelling.map((item) => (
-              <div key={item.id} className="py-4 flex items-center justify-between">
+            {performance.topSelling.map((item, idx) => (
+              <div key={`${item.id}-${idx}`} className="py-4 flex items-center justify-between">
                 <div>
                   <div className="font-bold text-slate-800">{item.name}</div>
                   <div className="text-xs text-slate-400">SKU: {item.sku}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-indigo-600">{item.salesCount} Adet</div>
-                  <div className="text-xs text-slate-500">{item.revenue.toLocaleString('tr-TR')} ₺</div>
+                  <div className="font-bold text-indigo-600">{item.salesCount} {t('reports.performance.unitPiece')}</div>
+                  <div className="text-xs text-slate-500">{item.revenue.toLocaleString(currentLocale)} ₺</div>
                 </div>
               </div>
             ))}
             {performance.topSelling.length === 0 && (
-              <div className="py-8 text-center text-slate-400">Bu dönemde satış bulunmuyor.</div>
+              <div className="py-8 text-center text-slate-400">{t('reports.performance.noSalesPeriod')}</div>
             )}
           </div>
         </AccordionItem>
 
         <AccordionItem 
-          title="Hiç Satmayan Ürünler" 
+          title={t('reports.performance.nonSelling')} 
           icon={<AlertCircle className="text-rose-500" />}
           isOpen={openAccordion === 'non'}
           onToggle={() => setOpenAccordion(openAccordion === 'non' ? null : 'non')}
         >
           <div className="divide-y divide-slate-100">
-            {performance.nonSelling.map((item) => (
-              <div key={item.id} className="py-4 flex items-center justify-between">
+            {performance.nonSelling.map((item, idx) => (
+              <div key={`${item.id}-${idx}`} className="py-4 flex items-center justify-between">
                 <div>
                   <div className="font-bold text-slate-700">{item.name}</div>
                   <div className="text-xs text-slate-400">SKU: {item.sku}</div>
                 </div>
-                <div className="text-rose-500 text-sm font-semibold italic">0 Satış</div>
+                <div className="text-rose-500 text-sm font-semibold italic">{t('reports.performance.zeroSales')}</div>
               </div>
             ))}
             {performance.nonSelling.length === 0 && (
-              <div className="py-8 text-center text-slate-400">Tüm ürünleriniz satış gördü!</div>
+              <div className="py-8 text-center text-slate-400">{t('reports.performance.allProductsSold')}</div>
             )}
           </div>
         </AccordionItem>

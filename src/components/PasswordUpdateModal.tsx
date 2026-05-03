@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { SlideOver } from './SlideOver';
 import { Lock, ShieldCheck, AlertCircle, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface PasswordUpdateModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface PasswordUpdateModalProps {
 }
 
 export function PasswordUpdateModal({ isOpen, onClose, isForced = false }: PasswordUpdateModalProps) {
+  const { t } = useTranslation();
   const { signOut, setRecovering } = useAuth();
   const navigate = useNavigate();
   
@@ -26,12 +28,12 @@ export function PasswordUpdateModal({ isOpen, onClose, isForced = false }: Passw
     setError('');
     
     if (newPassword.length < 6) {
-      setError('Şifre en az 6 karakter olmalıdır.');
+      setError(t('passwordUpdate.minLengthError'));
       return;
     }
     
     if (newPassword !== confirmPassword) {
-      setError('Şifreler eşleşmiyor.');
+      setError(t('passwordUpdate.matchError'));
       return;
     }
 
@@ -54,7 +56,7 @@ export function PasswordUpdateModal({ isOpen, onClose, isForced = false }: Passw
       }, 2000);
 
     } catch (err: any) {
-      setError(err.message || 'Şifre güncellenirken bir hata oluştu.');
+      setError(err.message || t('passwordUpdate.error'));
     } finally {
       setLoading(false);
     }
@@ -64,7 +66,7 @@ export function PasswordUpdateModal({ isOpen, onClose, isForced = false }: Passw
     <SlideOver 
       isOpen={isOpen} 
       onClose={isForced ? () => {} : onClose} 
-      title={isForced ? "Şifrenizi Belirleyin" : "Şifre Değiştir"}
+      title={isForced ? t('passwordUpdate.forcedTitle') : t('passwordUpdate.title')}
     >
       <div className="space-y-8">
         <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-[24px] flex items-start gap-4">
@@ -72,11 +74,11 @@ export function PasswordUpdateModal({ isOpen, onClose, isForced = false }: Passw
               <ShieldCheck size={24} />
            </div>
            <div>
-              <h4 className="font-bold text-slate-800 text-sm">Güvenlik Kontrolü</h4>
+              <h4 className="font-bold text-slate-800 text-sm">{t('passwordUpdate.securityCheck')}</h4>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                 {isForced 
-                  ? "Hesap kurtarma işleminiz başarıyla tamamlandı. Lütfen yeni ve güvenli bir şifre belirleyin."
-                  : "Hesap güvenliğiniz için şifrenizi düzenli aralıklarla değiştirmenizi öneririz."}
+                  ? t('passwordUpdate.forcedSubtitle')
+                  : t('passwordUpdate.regularSubtitle')}
               </p>
            </div>
         </div>
@@ -86,8 +88,8 @@ export function PasswordUpdateModal({ isOpen, onClose, isForced = false }: Passw
              <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl shadow-lg shadow-emerald-100">
                 ✅
              </div>
-             <h3 className="text-xl font-black text-slate-800">Şifre Başarıyla Güncellendi</h3>
-             <p className="text-sm text-slate-500">Oturumunuz kapatılıyor, lütfen yeni şifrenizle tekrar giriş yapın...</p>
+             <h3 className="text-xl font-black text-slate-800">{t('passwordUpdate.successTitle')}</h3>
+             <p className="text-sm text-slate-500">{t('passwordUpdate.successMessage')}</p>
           </div>
         ) : (
           <form onSubmit={handleUpdate} className="space-y-6">
@@ -100,7 +102,7 @@ export function PasswordUpdateModal({ isOpen, onClose, isForced = false }: Passw
 
              <div className="space-y-4">
                 <div>
-                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">Yeni Şifre</label>
+                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">{t('passwordUpdate.newPassword')}</label>
                    <div className="relative">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                       <input 
@@ -112,7 +114,7 @@ export function PasswordUpdateModal({ isOpen, onClose, isForced = false }: Passw
                 </div>
 
                 <div>
-                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">Yeni Şifre (Tekrar)</label>
+                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">{t('passwordUpdate.confirmPassword')}</label>
                    <div className="relative">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                       <input 
@@ -128,10 +130,10 @@ export function PasswordUpdateModal({ isOpen, onClose, isForced = false }: Passw
                type="submit" disabled={loading}
                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm shadow-xl shadow-slate-200 hover:bg-blue-600 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50"
              >
-                {loading ? "GÜNCELLENİYOR..." : (
+                {loading ? t('passwordUpdate.updating') : (
                   <>
                     <Save size={18} />
-                    ŞİFREYİ KAYDET VE YENİDEN BAŞLAT
+                    {t('passwordUpdate.saveButton')}
                   </>
                 )}
              </button>
@@ -141,7 +143,7 @@ export function PasswordUpdateModal({ isOpen, onClose, isForced = false }: Passw
                  type="button" onClick={onClose}
                  className="w-full text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors"
                >
-                 İşlemi İptal Et
+                 {t('passwordUpdate.cancel')}
                </button>
              )}
           </form>

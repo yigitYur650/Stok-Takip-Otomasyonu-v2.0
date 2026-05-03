@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import i18next from 'i18next';
 
 export const pdfService = {
   generateSaleReceipt: (sale: any, shopName: string = 'MAĞAZA') => {
@@ -14,12 +15,12 @@ export const pdfService = {
     
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text("SATIS FISI", 40, 22, { align: 'center' });
+    doc.text(i18next.t('pdf.receipt.title'), 40, 22, { align: 'center' });
     
     doc.setFontSize(8);
-    doc.text(`Tarih: ${new Date(sale.created_at).toLocaleString()}`, 5, 32);
-    doc.text(`Fis No: ${sale.id.split('-')[0].toUpperCase()}`, 5, 36);
-    doc.text(`Kasiyer: ${sanitize(sale.user_email?.split('@')[0] || 'Admin')}`, 5, 40);
+    doc.text(`${i18next.t('pdf.receipt.date')}: ${new Date(sale.created_at).toLocaleString()}`, 5, 32);
+    doc.text(`${i18next.t('pdf.receipt.receiptNo')}: ${sale.id.split('-')[0].toUpperCase()}`, 5, 36);
+    doc.text(`${i18next.t('pdf.receipt.cashier')}: ${sanitize(sale.user_email?.split('@')[0] || 'Admin')}`, 5, 40);
 
     const tableData = sale.sale_items?.map((item: any) => [
       sanitize(item.product_variants?.products?.name || 'Urun'),
@@ -29,7 +30,7 @@ export const pdfService = {
 
     autoTable(doc, {
       startY: 45,
-      head: [['Urun', 'Miktar', 'Tutar']],
+      head: [[i18next.t('pdf.receipt.itemHeader'), i18next.t('pdf.receipt.qtyHeader'), i18next.t('pdf.receipt.amountHeader')]],
       body: tableData,
       theme: 'plain',
       styles: { fontSize: 8, cellPadding: 1 },
@@ -41,15 +42,15 @@ export const pdfService = {
     
     doc.setFont("helvetica", "bold");
     doc.text("------------------------------------------------", 40, finalY + 5, { align: 'center' });
-    doc.text(`GENEL TOPLAM: ${Number(sale.total_amount).toLocaleString()} TL`, 5, finalY + 10);
+    doc.text(`${i18next.t('pdf.receipt.total')}: ${Number(sale.total_amount).toLocaleString()} TL`, 5, finalY + 10);
     
     doc.setFont("helvetica", "normal");
-    doc.text(`Odeme Tipi: ${sale.payment_method}`, 5, finalY + 15);
+    doc.text(`${i18next.t('pdf.receipt.paymentType')}: ${sale.payment_method}`, 5, finalY + 15);
 
     doc.setFont("helvetica", "italic");
     doc.setFontSize(8);
-    doc.text("Bizi tercih ettiginiz", 40, finalY + 25, { align: 'center' });
-    doc.text("icin tesekkur ederiz.", 40, finalY + 29, { align: 'center' });
+    doc.text(i18next.t('pdf.receipt.thankYou1'), 40, finalY + 25, { align: 'center' });
+    doc.text(i18next.t('pdf.receipt.thankYou2'), 40, finalY + 29, { align: 'center' });
 
     doc.save(`Fis_${sale.id.split('-')[0]}.pdf`);
   },
@@ -61,11 +62,11 @@ export const pdfService = {
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
-    doc.text(`${sanitize(shopName)} - ENVANTER RAPORU`, 14, 20);
+    doc.text(`${sanitize(shopName)} - ${i18next.t('pdf.inventory.title')}`, 14, 20);
     
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(`Rapor Tarihi: ${new Date().toLocaleString()}`, 14, 28);
+    doc.text(`${i18next.t('pdf.inventory.date')}: ${new Date().toLocaleString()}`, 14, 28);
 
     const tableData: any[] = [];
     
@@ -87,7 +88,13 @@ export const pdfService = {
 
     autoTable(doc, {
       startY: 35,
-      head: [['Urun Adi', 'SKU', 'Renk/Beden', 'Stok', 'Fiyat']],
+      head: [[
+        i18next.t('pdf.inventory.headers.name'),
+        i18next.t('pdf.inventory.headers.sku'),
+        i18next.t('pdf.inventory.headers.variant'),
+        i18next.t('pdf.inventory.headers.stock'),
+        i18next.t('pdf.inventory.headers.price')
+      ]],
       body: tableData,
       theme: 'grid',
       styles: { fontSize: 9 },
@@ -102,21 +109,21 @@ export const pdfService = {
     const sanitize = (text: string) => text ? text.toString().replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/Ğ/g, 'G').replace(/Ü/g, 'U').replace(/Ş/g, 'S').replace(/İ/g, 'I').replace(/Ö/g, 'O').replace(/Ç/g, 'C') : '';
 
     const periodMap: Record<string, string> = {
-      daily: 'GUNLUK',
-      weekly: 'HAFTALIK',
-      monthly: 'AYLIK',
-      yearly: 'YILLIK',
-      all: 'TUM ZAMANLAR'
+      daily: i18next.t('pdf.sales.periods.daily'),
+      weekly: i18next.t('pdf.sales.periods.weekly'),
+      monthly: i18next.t('pdf.sales.periods.monthly'),
+      yearly: i18next.t('pdf.sales.periods.yearly'),
+      all: i18next.t('pdf.sales.periods.all')
     };
-    const titlePeriod = periodMap[periodName] || 'SATIS';
+    const titlePeriod = periodMap[periodName] || i18next.t('pdf.sales.title');
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
-    doc.text(`${sanitize(shopName)} - ${titlePeriod} SATIS RAPORU`, 14, 20);
+    doc.text(`${sanitize(shopName)} - ${titlePeriod} ${i18next.t('pdf.sales.title')}`, 14, 20);
     
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(`Rapor Tarihi: ${new Date().toLocaleString()}`, 14, 28);
+    doc.text(`${i18next.t('pdf.inventory.date')}: ${new Date().toLocaleString()}`, 14, 28);
 
     let grandTotal = 0;
     const tableData = filteredSales.map(sale => {
@@ -134,7 +141,12 @@ export const pdfService = {
 
     autoTable(doc, {
       startY: 35,
-      head: [['Tarih', 'Satis ID', 'Urun Sayisi', 'Toplam Tutar']],
+      head: [[
+        i18next.t('pdf.sales.headers.date'),
+        i18next.t('pdf.sales.headers.saleId'),
+        i18next.t('pdf.sales.headers.itemCount'),
+        i18next.t('pdf.sales.headers.total')
+      ]],
       body: tableData,
       theme: 'striped',
       styles: { fontSize: 9 },
@@ -145,7 +157,7 @@ export const pdfService = {
     
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text(`Genel Toplam: ${grandTotal.toLocaleString()} TL`, 14, finalY + 10);
+    doc.text(`${i18next.t('pdf.sales.grandTotal')}: ${grandTotal.toLocaleString()} TL`, 14, finalY + 10);
 
     doc.save(`Satis_Raporu_${titlePeriod}_${new Date().toISOString().split('T')[0]}.pdf`);
   }

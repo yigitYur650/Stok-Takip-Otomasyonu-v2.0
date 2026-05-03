@@ -6,37 +6,34 @@ import { Plus, Trash2, Package, History as HistoryIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabaseClient';
 import { useMasterData } from '../context/MasterDataContext';
+import { useTranslation } from 'react-i18next';
 
 interface ProductFormProps {
   onClose: () => void;
-  initialData?: any; // Düzenleme için gelen ürün verisi
+  initialData?: any;
 }
 
 export function ProductForm({ onClose, initialData }: ProductFormProps) {
+  const { t } = useTranslation();
   const { productService } = useServices();
   const { triggerRefresh } = useRefresh();
   const { profile } = useAuth();
   const { categories, colors, sizes } = useMasterData();
   const [loading, setLoading] = useState(false);
   
-  // Ana Ürün State
   const [categoryId, setCategoryId] = useState('');
   const [description, setDescription] = useState('');
-  
-  // Varyant State (Array)
   const [variants, setVariants] = useState<any[]>([]);
 
-  // initialData Senkronizasyonu (Edit/New Modu Geçişi)
   useEffect(() => {
     if (initialData) {
-      // DÜZENLEME MODU (Edit)
       setCategoryId(initialData.category_id || '');
       setDescription(initialData.description || '');
       
       const mappedVariants = initialData.product_variants?.map((v: any) => ({
         id: v.id,
-        color_id: v.color || v.color_id || '', // Veritabanı şemasına (color) öncelik ver
-        size_id: v.size || v.size_id || '',   // Veritabanı şemasına (size) öncelik ver
+        color_id: v.color || v.color_id || '',
+        size_id: v.size || v.size_id || '',
         sku: v.sku || '',
         retail_price: v.retail_price || '',
         stock_quantity: v.stock_quantity || '',
@@ -44,13 +41,11 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
         isExisting: true
       })) || [];
 
-      // Eğer varyant yoksa en az bir boş varyant göster (Opsiyonel ama UX için iyi)
       setVariants(mappedVariants.length > 0 ? mappedVariants : [{
         id: Date.now().toString(),
         color_id: '', size_id: '', sku: '', retail_price: '', stock_quantity: '', low_stock_threshold: '', isExisting: false
       }]);
     } else {
-      // YENİ EKLEME MODU (Reset)
       setCategoryId('');
       setDescription('');
       setVariants([{
@@ -77,14 +72,14 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!categoryId) return alert("Lütfen ürün kategorisini seçin.");
+    if (!categoryId) return alert(t('productForm.errors.selectCategory'));
     
     for (const v of variants) {
       if (!v.color_id || !v.size_id) {
-        return alert("Lütfen her varyant için Renk ve Beden seçiniz.");
+        return alert(t('productForm.errors.selectColorSize'));
       }
       if (v.low_stock_threshold === '' || v.low_stock_threshold === null) {
-        return alert("Lütfen her varyant için Kritik Stok Eşiği belirleyin.");
+        return alert(t('productForm.errors.setThreshold'));
       }
     }
     
@@ -93,7 +88,7 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
       const selectedCat = categories.find(c => c.id === categoryId);
       
       const productPayload = {
-        name: selectedCat?.name || 'İsimsiz Kategori',
+        name: selectedCat?.name || t('inventory.product.noCategory'),
         description: description.trim() || null,
         shop_id: profile?.shop_id || '',
         category_id: categoryId
@@ -102,20 +97,12 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
       let productId = initialData?.id;
 
       if (initialData) {
-        // GÜNCELLEME MODU
-        // @ts-ignore
         await productService.updateProduct(productId, productPayload);
-        console.log("✅ Ana Ürün Güncellendi.");
       } else {
-        // YENİ EKLEME MODU
         const product = await productService.createProduct(productPayload as any);
         productId = product.id;
-        console.log("✅ Ana Ürün Kaydedildi. ID:", productId);
       }
 
-      // --- VARYANT SENKRONİZASYONU ---
-      
-      // 1. Silinecekleri belirle
       if (initialData) {
         const currentVariantIds = variants.filter(v => v.isExisting).map(v => v.id);
         const originalVariantIds = initialData.product_variants.map((v: any) => v.id);
@@ -126,7 +113,6 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
         }
       }
 
-      // 2. Ekle veya Güncelle
       for (const [index, v] of variants.entries()) {
         const retailPriceNum = parseFloat(v.retail_price.toString().replace(',', '.')) || 0;
         const stockQtyNum = parseInt(v.stock_quantity.toString()) || 0;
@@ -150,12 +136,10 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
         }
       }
       
-      console.log("🎉 Başarıyla Tamamlandı.");
       triggerRefresh();
       onClose();
     } catch (err: any) {
-      console.error("Supabase Error:", err);
-      alert(`Ürün kaydedilirken hata oluştu: ${err.message || 'Bilinmiyor'}`);
+      alert(`${t('productForm.errors.generic')} ${err.message || 'Bilinmiyor'}`);
     } finally {
       setLoading(false);
     }
@@ -165,41 +149,39 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
     <form onSubmit={handleSubmit} className="flex flex-col h-full">
       <div className="flex-1 space-y-8 pb-10">
         
-        {/* Adım 1: Ürün Kartı */}
         <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 shadow-sm">
-          <h3 className="text-sm font-bold text-indigo-600 mb-4 tracking-wider uppercase">1. Ana Ürün Bilgileri</h3>
+          <h3 className="text-sm font-bold text-indigo-600 mb-4 tracking-wider uppercase">{t('productForm.step1')}</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5 ml-1">Kategori / Ürün Cinsi</label>
+              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5 ml-1">{t('productForm.categoryLabel')}</label>
               <select
                 required value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all shadow-sm font-medium"
               >
-                <option value="">Seçiniz...</option>
+                <option value="">{t('productForm.selectPlaceholder')}</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5 ml-1">Kısa Açıklama</label>
+              <label className="block text-[13px] font-semibold text-slate-700 mb-1.5 ml-1">{t('productForm.descriptionLabel')}</label>
               <textarea 
                 value={description} onChange={(e) => setDescription(e.target.value)} rows={2}
                 className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all shadow-sm resize-none text-sm"
-                placeholder="Örn: 2024 kış sezonu yeni kesim..."
+                placeholder={t('productForm.descriptionPlaceholder')}
               />
             </div>
           </div>
         </div>
         
-        {/* Adım 2: Varyantlar */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-blue-600 tracking-wider uppercase">2. Ürün Varyantları</h3>
+            <h3 className="text-sm font-bold text-blue-600 tracking-wider uppercase">{t('productForm.step2')}</h3>
             <button 
               type="button" 
               onClick={handleAddVariant}
               className="flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
             >
-              <Plus size={14} /> Yeni Varyant
+              <Plus size={14} /> {t('productForm.addVariant')}
             </button>
           </div>
           
@@ -234,22 +216,22 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
                       
                       <div className="grid grid-cols-2 gap-3 mb-3">
                          <div>
-                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Renk</label>
+                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">{t('productForm.colorLabel')}</label>
                            <select
                              required value={variant.color_id} onChange={(e) => handleUpdateVariant(variant.id, 'color_id', e.target.value)}
                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
                            >
-                             <option value="">Renk Seçin</option>
+                             <option value="">{t('productForm.colorLabel')} {t('productForm.selectPlaceholder').toLowerCase()}</option>
                              {colors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                            </select>
                          </div>
                          <div>
-                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Beden / Ölçü</label>
+                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">{t('productForm.sizeLabel')}</label>
                            <select
                              required value={variant.size_id} onChange={(e) => handleUpdateVariant(variant.id, 'size_id', e.target.value)}
                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
                            >
-                             <option value="">Beden Seçin</option>
+                             <option value="">{t('productForm.sizeLabel')} {t('productForm.selectPlaceholder').toLowerCase()}</option>
                              {sizes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                            </select>
                          </div>
@@ -257,23 +239,23 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
 
                       <div className="grid grid-cols-4 gap-3">
                          <div>
-                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Stok</label>
+                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">{t('productForm.stockLabel')}</label>
                            <input 
                              required type="number" min="0" value={variant.stock_quantity} onChange={(e) => handleUpdateVariant(variant.id, 'stock_quantity', e.target.value)}
                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
-                             placeholder="Adet"
+                             placeholder={t('inventory.stockModal.unit')}
                            />
                          </div>
                          <div>
-                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Kritik Stok</label>
+                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">{t('productForm.criticalStockLabel')}</label>
                            <input 
                              required type="number" min="0" value={variant.low_stock_threshold} onChange={(e) => handleUpdateVariant(variant.id, 'low_stock_threshold', e.target.value)}
                              className="w-full px-3 py-2 bg-rose-50 border border-rose-100 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-rose-500 outline-none transition-colors text-rose-600 font-bold"
-                             placeholder="Eşik"
+                             placeholder={t('categoryManager.history.result')}
                            />
                          </div>
                          <div>
-                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Satış Fiyatı (₺)</label>
+                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">{t('productForm.priceLabel')}</label>
                            <input 
                              required type="number" min="0" step="0.01" value={variant.retail_price} onChange={(e) => handleUpdateVariant(variant.id, 'retail_price', e.target.value)}
                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-emerald-600 font-bold"
@@ -281,11 +263,11 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
                            />
                          </div>
                          <div>
-                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">Barkod/SKU</label>
+                           <label className="block text-[11px] font-semibold text-slate-500 mb-1 ml-1 uppercase">{t('productForm.skuLabel')}</label>
                            <input 
                              value={variant.sku} onChange={(e) => handleUpdateVariant(variant.id, 'sku', e.target.value)}
                              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[13px] font-mono focus:bg-white focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
-                             placeholder="Oto-Kayıt"
+                             placeholder={t('productForm.skuPlaceholder')}
                            />
                          </div>
                       </div>
@@ -300,13 +282,13 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
                   className="py-12 flex flex-col items-center justify-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 text-slate-400 gap-3"
                 >
                   <Package size={40} className="opacity-20" />
-                  <p className="font-bold text-sm">Bu ürüne ait varyant bulunmuyor.</p>
+                  <p className="font-bold text-sm">{t('productForm.noVariant')}</p>
                   <button 
                     type="button" 
                     onClick={handleAddVariant}
                     className="text-xs font-black text-blue-600 underline underline-offset-4"
                   >
-                    Hemen yeni varyant ekleyin
+                    {t('productForm.addVariantNow')}
                   </button>
                 </motion.div>
               )}
@@ -321,7 +303,7 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
             <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
               <HistoryIcon size={20} />
             </div>
-            <h3 className="text-lg font-black text-slate-800">Son Stok Hareketleri (Audit Trail)</h3>
+            <h3 className="text-lg font-black text-slate-800">{t('productForm.auditTrail')}</h3>
           </div>
           
           <div className="space-y-4">
@@ -338,7 +320,7 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
           onClick={onClose}
           className="px-6 py-3 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors"
         >
-          İptal
+          {t('productForm.cancel')}
         </button>
         <button 
           type="submit" 
@@ -348,11 +330,11 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
           {loading ? (
              <div className="flex items-center gap-2">
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Kaydediliyor...
+                {t('productForm.saving')}
              </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Package size={18} /> {initialData ? 'Değişiklikleri Kaydet' : 'Tümünü Kaydet'}
+              <Package size={18} /> {initialData ? t('productForm.saveChanges') : t('productForm.saveAll')}
             </div>
           )}
         </button>
@@ -361,16 +343,14 @@ export function ProductForm({ onClose, initialData }: ProductFormProps) {
   );
 }
 
-// Yardımcı Bileşen: Hareket Geçmişi Listesi
 function MovementHistoryList({ variantId, variantLabel }: { variantId: string, variantLabel: string }) {
+  const { t } = useTranslation();
   const { stockService } = useServices();
   const [movements, setMovements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      // UUID validasyonu: Sadece gerçek UUID formatındaki (36 karakter) ID'ler için istek atılır.
-      // Geçici ID'ler (Date.now()) genellikle 13 karakterdir.
       if (!variantId || variantId.length < 20) {
         setLoading(false);
         return;
@@ -389,40 +369,40 @@ function MovementHistoryList({ variantId, variantLabel }: { variantId: string, v
     load();
   }, [variantId]);
 
-  if (loading) return <div className="text-[10px] text-slate-400 p-2 animate-pulse font-bold tracking-widest">VERİLER ÇEKİLİYOR...</div>;
+  if (loading) return <div className="text-[10px] text-slate-400 p-2 animate-pulse font-bold tracking-widest">{t('categoryManager.history.loading')}</div>;
   if (!movements.length) return null;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm mb-6">
       <div className="px-5 py-3 bg-slate-900 text-white text-[11px] font-black uppercase tracking-[0.2em] flex justify-between items-center">
         <span>{variantLabel}</span>
-        <span className="bg-indigo-500 px-2 py-0.5 rounded text-[9px]">{movements.length} Kayıt</span>
+        <span className="bg-indigo-500 px-2 py-0.5 rounded text-[9px]">{movements.length} {t('categoryManager.history.records')}</span>
       </div>
       
       <div className="overflow-x-auto">
         <table className="w-full text-[11px] text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100">
-              <th className="px-4 py-2 font-black text-slate-400 uppercase tracking-tighter">Tarih</th>
-              <th className="px-4 py-2 font-black text-slate-400 uppercase tracking-tighter">Yapan</th>
-              <th className="px-4 py-2 font-black text-slate-400 uppercase tracking-tighter text-center">İşlem</th>
-              <th className="px-4 py-2 font-black text-slate-400 uppercase tracking-tighter text-right">Önceki</th>
-              <th className="px-4 py-2 font-black text-slate-400 uppercase tracking-tighter text-right">Değim</th>
-              <th className="px-4 py-2 font-black text-slate-400 uppercase tracking-tighter text-right">Sonuç</th>
+              <th className="px-4 py-2 font-black text-slate-400 uppercase tracking-tighter">{t('categoryManager.history.date')}</th>
+              <th className="px-4 py-2 font-black text-slate-400 uppercase tracking-tighter">{t('categoryManager.history.user')}</th>
+              <th className="px-4 py-2 font-black text-slate-400 uppercase tracking-tighter text-center">{t('categoryManager.history.type')}</th>
+              <th className="px-4 py-2 font-black text-slate-400 uppercase tracking-tighter text-right">{t('categoryManager.history.previous')}</th>
+              <th className="px-4 py-2 font-black text-slate-400 uppercase tracking-tighter text-right">{t('categoryManager.history.change')}</th>
+              <th className="px-4 py-2 font-black text-slate-400 uppercase tracking-tighter text-right">{t('categoryManager.history.result')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {movements.map((m: any) => (
               <tr key={m.id} className="hover:bg-slate-50/50 transition-colors">
                 <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
-                  {new Date(m.created_at).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  {new Date(m.created_at).toLocaleString(t('common.locale') === 'en' ? 'en-US' : 'tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </td>
                 <td className="px-4 py-3 font-bold text-slate-700 whitespace-nowrap">
-                  {m.user_email || 'Sistem'}
+                  {m.user_email || t('categoryManager.history.system')}
                 </td>
                 <td className="px-4 py-3 text-center">
                   <span className={`px-2 py-1 rounded-md font-black text-[9px] ${m.type === 'IN' || m.type === 'RETURN' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                    {m.type === 'IN' || m.type === 'RETURN' ? 'GİRİŞ' : 'ÇIKIŞ'}
+                    {m.type === 'IN' || m.type === 'RETURN' ? t('categoryManager.history.in') : t('categoryManager.history.out')}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right text-slate-400 font-mono">{m.previous_stock ?? '-'}</td>

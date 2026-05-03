@@ -37,8 +37,10 @@ interface CartItem {
   quantity: number;
   stock: number;
 }
+import { useTranslation } from 'react-i18next';
 
 export function Sales() {
+  const { t } = useTranslation();
   const { productService, saleService } = useServices();
   const { user, profile } = useAuth();
   const { triggerRefresh, refreshKey } = useRefresh();
@@ -61,7 +63,7 @@ export function Sales() {
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [selectedItemForReturn, setSelectedItemForReturn] = useState<any>(null);
   const [returnQuantity, setReturnQuantity] = useState(1);
-  const [returnReason, setReturnReason] = useState('Müşteri Vazgeçti');
+  const [returnReason, setReturnReason] = useState(t('sales.return.reasons.changedMind'));
   const [saleReturns, setSaleReturns] = useState<any[]>([]);
 
   // Report States
@@ -251,7 +253,7 @@ export function Sales() {
       const sales = await saleService.getTodaySales();
       setRecentSales(sales);
     } catch (err: any) {
-      alert("İade işlemi başarısız: " + err.message);
+      alert(t('sales.return.error') + err.message);
     }
   };
 
@@ -271,7 +273,7 @@ export function Sales() {
             <div className="relative flex-1">
               <input 
                 type="text" 
-                placeholder="Ürün Ara..." 
+                placeholder={t('sales.searchPlaceholder')} 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 font-medium text-emerald-900 transition-all shadow-sm"
@@ -284,7 +286,7 @@ export function Sales() {
                  className="flex items-center gap-2 bg-white text-slate-600 px-6 py-3.5 rounded-2xl font-bold text-sm border border-emerald-100 hover:bg-emerald-50 transition-all shadow-sm"
                >
                  <History size={18} className="text-emerald-500" />
-                 Son İşlemler
+                 {t('sales.recentActions')}
                </button>
             </div>
           </div>
@@ -316,17 +318,17 @@ export function Sales() {
                   >
                     <div className="absolute -top-6 -right-6 w-12 h-12 bg-emerald-500/5 rounded-full group-hover:scale-150 transition-transform duration-500" />
                     
-                    <span className="text-[10px] font-black uppercase text-emerald-500 mb-1 line-clamp-1">{p.category || 'GENEL'}</span>
+                    <span className="text-[10px] font-black uppercase text-emerald-500 mb-1 line-clamp-1">{p.category || t('sales.categoryGeneral')}</span>
                     <h4 className="font-bold text-slate-800 text-sm mb-0.5 line-clamp-1 group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{p.name}</h4>
                     <p className="text-[10px] font-bold text-slate-600 mb-3 truncate">{p.variant_name}</p>
                     
                     <div className="mt-auto flex items-end justify-between">
                       <div className="flex flex-col">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Birim Fiyat</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{t('sales.unitPrice')}</span>
                         <span className="text-sm font-black text-slate-900 leading-none">₺{Number(p.price).toLocaleString()}</span>
                       </div>
                       <div className={`px-2 py-1 rounded-lg text-[9px] font-black ${p.stock <= 5 ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-600'}`}>
-                        STOK: {p.stock}
+                        {t('sales.stock')}: {p.stock}
                       </div>
                     </div>
                   </motion.button>
@@ -335,7 +337,7 @@ export function Sales() {
             ) : (
               <div className="flex flex-col items-center justify-center py-20 bg-emerald-50/20 rounded-[40px] border-2 border-dashed border-emerald-100">
                 <Search size={48} className="text-emerald-200 mb-4" />
-                <p className="text-emerald-400 font-bold italic">Aradığınız kriterlere uygun ürün bulunamadı.</p>
+                <p className="text-emerald-400 font-bold italic">{t('sales.noProductFound')}</p>
               </div>
             )}
           </div>
@@ -349,7 +351,7 @@ export function Sales() {
               animate={{ y: 0, opacity: 1 }}
               className="absolute top-0 left-0 right-0 bg-emerald-500 text-white p-4 z-50 text-center font-bold text-sm shadow-xl"
             >
-              🎉 Satış Başarıyla Tamamlandı!
+              🎉 {t('sales.summary.success')}
             </motion.div>
           )}
 
@@ -359,8 +361,8 @@ export function Sales() {
                 <CartIcon size={24} />
               </div>
               <div>
-                <h3 className="font-black text-lg leading-none">SEPETİM</h3>
-                <p className="text-xs text-emerald-100 mt-1 uppercase tracking-widest font-bold font-mono">{cart.length} ÜRÜN</p>
+                <h3 className="font-black text-lg leading-none">{t('sales.cart.title')}</h3>
+                <p className="text-xs text-emerald-100 mt-1 uppercase tracking-widest font-bold font-mono">{cart.length} {t('sales.cart.items')}</p>
               </div>
             </div>
           </div>
@@ -407,7 +409,7 @@ export function Sales() {
                         </button>
                       </div>
                       <div className="text-right">
-                        <p className="text-[9px] font-bold text-slate-400">Satır Toplamı</p>
+                        <p className="text-[9px] font-bold text-slate-400">{t('sales.cart.rowTotal')}</p>
                         <p className="text-sm font-black text-slate-900">₺{(item.price * item.quantity).toLocaleString()}</p>
                       </div>
                     </div>
@@ -419,8 +421,8 @@ export function Sales() {
                 <div className="w-20 h-20 bg-emerald-50 text-emerald-200 rounded-full flex items-center justify-center mb-4">
                   <CartIcon size={40} />
                 </div>
-                <p className="text-sm font-bold text-emerald-300 uppercase tracking-tighter">Sepetiniz Boş</p>
-                <p className="text-xs text-slate-400 mt-2 italic">Hızlı satış için ürün seçin.</p>
+                <p className="text-sm font-bold text-emerald-300 uppercase tracking-tighter">{t('sales.cart.empty')}</p>
+                <p className="text-xs text-slate-400 mt-2 italic">{t('sales.cart.emptySubtitle')}</p>
               </div>
             )}
           </div>
@@ -430,15 +432,15 @@ export function Sales() {
             {dailySummary && (
               <div className="grid grid-cols-3 gap-2 pb-4 border-b border-dashed border-emerald-100">
                  <div className="text-center bg-emerald-50/50 p-2 rounded-xl border border-emerald-100/50">
-                    <p className="text-[8px] font-black text-emerald-600 uppercase">Nakit</p>
+                    <p className="text-[8px] font-black text-emerald-600 uppercase">{t('sales.summary.cash')}</p>
                     <p className="text-[10px] font-black text-slate-700">₺{Math.round(dailySummary.cash).toLocaleString()}</p>
                  </div>
                  <div className="text-center bg-blue-50/50 p-2 rounded-xl border border-blue-100/50">
-                    <p className="text-[8px] font-black text-blue-600 uppercase">Kart</p>
+                    <p className="text-[8px] font-black text-blue-600 uppercase">{t('sales.summary.card')}</p>
                     <p className="text-[10px] font-black text-slate-700">₺{Math.round(dailySummary.card).toLocaleString()}</p>
                  </div>
                  <div className="text-center bg-amber-50/50 p-2 rounded-xl border border-amber-100/50">
-                    <p className="text-[8px] font-black text-amber-600 uppercase">M.Order</p>
+                    <p className="text-[8px] font-black text-amber-600 uppercase">{t('sales.summary.mailOrder')}</p>
                     <p className="text-[10px] font-black text-slate-700">₺{Math.round(dailySummary.mailOrder).toLocaleString()}</p>
                  </div>
               </div>
@@ -446,7 +448,7 @@ export function Sales() {
 
             <div className="flex items-center justify-between">
               <span className="text-xs font-black text-emerald-600 uppercase tracking-widest flex items-center gap-2">
-                <TrendingUp size={14} /> Genel Toplam
+                <TrendingUp size={14} /> {t('sales.summary.total')}
               </span>
               <span className="text-3xl font-black text-slate-900 tracking-tighter">₺{cartTotal.toLocaleString()}</span>
             </div>
@@ -457,7 +459,7 @@ export function Sales() {
               className="w-full bg-emerald-600 text-white py-5 rounded-[24px] font-black text-sm shadow-xl shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-3 group uppercase tracking-widest"
             >
               <CheckCircle2 size={24} className="group-hover:scale-110 transition-transform" />
-              SATIŞI TAMAMLA
+              {t('sales.summary.complete')}
             </button>
           </div>
         </div>
@@ -476,7 +478,7 @@ export function Sales() {
       <SlideOver 
         isOpen={isHistoryOpen} 
         onClose={() => { setIsHistoryOpen(false); setSelectedSale(null); }}
-        title="Satış Geçmişi & Raporlama"
+        title={t('sales.history.title')}
       >
         <div className="space-y-6">
            {/* Raporlama Kontrolleri */}
@@ -487,11 +489,11 @@ export function Sales() {
                    onChange={(e) => setReportPeriod(e.target.value)}
                    className="bg-white border border-emerald-100 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm outline-none transition-colors"
                  >
-                   <option value="daily">Günlük</option>
-                   <option value="weekly">Haftalık</option>
-                   <option value="monthly">Aylık</option>
-                   <option value="yearly">Yıllık</option>
-                   <option value="all">Tümü</option>
+                   <option value="daily">{t('sales.history.period.daily')}</option>
+                   <option value="weekly">{t('sales.history.period.weekly')}</option>
+                   <option value="monthly">{t('sales.history.period.monthly')}</option>
+                   <option value="yearly">{t('sales.history.period.yearly')}</option>
+                   <option value="all">{t('sales.history.period.all')}</option>
                  </select>
                  <button 
                    onClick={() => pdfService.generateSalesReport(filteredReportSales, reportPeriod, profile?.shops?.name)}
@@ -502,18 +504,18 @@ export function Sales() {
               </div>
               <div className="flex gap-4">
                  <div className="flex-1 bg-white p-4 rounded-2xl border border-emerald-50 shadow-sm">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Toplam Ciro</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">{t('sales.history.totalRevenue')}</p>
                     <p className="text-xl font-black text-emerald-600">₺{reportSummary.total.toLocaleString()}</p>
                  </div>
                  <div className="flex-1 bg-white p-4 rounded-2xl border border-emerald-50 shadow-sm">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Satış Adedi</p>
-                    <p className="text-xl font-black text-slate-800">{reportSummary.count} <span className="text-sm text-slate-400 font-medium">İşlem</span></p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">{t('sales.history.saleCount')}</p>
+                    <p className="text-xl font-black text-slate-800">{reportSummary.count} <span className="text-sm text-slate-400 font-medium">{t('sales.history.transaction')}</span></p>
                  </div>
               </div>
            </div>
 
            <div className="space-y-3">
-             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">Satış Listesi</h4>
+             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">{t('sales.history.listTitle')}</h4>
              {filteredReportSales.map((sale) => (
              <button 
                key={sale.id}
@@ -545,7 +547,7 @@ export function Sales() {
            </div>
 
            {filteredReportSales.length === 0 && (
-             <div className="text-center py-20 text-slate-300 font-bold uppercase tracking-widest italic opacity-50">Seçilen dönemde satış yok</div>
+             <div className="text-center py-20 text-slate-300 font-bold uppercase tracking-widest italic opacity-50">{t('sales.history.noSales')}</div>
            )}
 
            {/* Satış Detayı */}
@@ -556,12 +558,12 @@ export function Sales() {
                className="p-6 bg-slate-900 text-white rounded-[32px] mt-8"
              >
                 <div className="flex justify-between items-start mb-6">
-                   <h4 className="font-black text-lg">İşlem Detayı</h4>
+                   <h4 className="font-black text-lg">{t('sales.history.detailTitle')}</h4>
                    <button 
                      onClick={() => handlePrint(selectedSale)}
                      className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors flex items-center gap-2 text-xs font-bold"
                    >
-                     <Printer size={16} /> Fiş Yazdır
+                     <Printer size={16} /> {t('sales.history.printReceipt')}
                    </button>
                 </div>
 
@@ -582,7 +584,7 @@ export function Sales() {
                           
                           <div className="flex items-center justify-between pt-2 border-t border-white/5 font-mono">
                              {isFullyReturned ? (
-                               <span className="text-[10px] font-black uppercase text-rose-400 bg-rose-400/10 px-2 py-1 rounded-lg">İade Edildi</span>
+                               <span className="text-[10px] font-black uppercase text-rose-400 bg-rose-400/10 px-2 py-1 rounded-lg">{t('sales.history.returned')}</span>
                              ) : (
                                <button 
                                  onClick={() => {
@@ -592,11 +594,11 @@ export function Sales() {
                                  }}
                                  className="text-[10px] font-black uppercase text-rose-400 hover:text-rose-300 transition-colors flex items-center gap-1"
                                >
-                                 <Plus size={10} className="rotate-45" /> İade Al
+                                 <Plus size={10} className="rotate-45" /> {t('sales.history.takeReturn')}
                                </button>
                              )}
                              {returnedQty > 0 && !isFullyReturned && (
-                               <span className="text-[9px] text-slate-400 font-bold italic">({returnedQty} adet iade alındı)</span>
+                               <span className="text-[9px] text-slate-400 font-bold italic">{t('sales.history.returnedInfo', { count: returnedQty })}</span>
                              )}
                           </div>
                        </div>
@@ -606,8 +608,8 @@ export function Sales() {
 
                 <div className="pt-4 border-t border-white/10 space-y-2">
                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-400">Kasiyer:</span>
-                      <span className="font-bold">{selectedSale.user_email || 'Bilinmiyor'}</span>
+                      <span className="text-slate-400">{t('sales.history.cashier')}:</span>
+                      <span className="font-bold">{selectedSale.user_email || t('common.unknown')}</span>
                    </div>
                    {selectedSale.customer_note && (
                      <div className="p-3 bg-white/5 rounded-xl text-xs flex gap-2 mt-2 italic text-emerald-400">
@@ -626,17 +628,17 @@ export function Sales() {
          {selectedSale && (
            <div className="w-[80mm] mx-auto text-sm">
               <div className="text-center mb-6">
-                 <h2 className="text-xl font-black uppercase tracking-tighter mb-1">SAAS TEXTILE ERP</h2>
+                 <h2 className="text-xl font-black uppercase tracking-tighter mb-1">{t('sales.receipt.title')}</h2>
                  <p className="text-[10px] uppercase">{profile?.shops?.name || 'MAGAZA 1'}</p>
                  <div className="my-4 border-b border-dashed border-black"></div>
-                 <p className="text-[10px]">TARIH: {new Date(selectedSale.created_at).toLocaleString()}</p>
-                 <p className="text-[10px]">FİS NO: {selectedSale.id.split('-')[0].toUpperCase()}</p>
+                 <p className="text-[10px]">{t('sales.receipt.date')}: {new Date(selectedSale.created_at).toLocaleString()}</p>
+                 <p className="text-[10px]">{t('sales.receipt.receiptNo')}: {selectedSale.id.split('-')[0].toUpperCase()}</p>
               </div>
 
               <div className="space-y-2 mb-6">
                  <div className="flex justify-between border-b border-black pb-1 mb-1 font-bold">
-                    <span>URUN / MIHTAR</span>
-                    <span>TUTAR</span>
+                    <span>{t('sales.receipt.itemHeader')}</span>
+                    <span>{t('sales.receipt.totalHeader')}</span>
                  </div>
                  {selectedSale.sale_items?.map((it: any) => (
                    <div key={it.id} className="flex justify-between text-[11px]">
@@ -651,20 +653,20 @@ export function Sales() {
 
               <div className="border-t border-dashed border-black pt-4 space-y-1">
                  <div className="flex justify-between text-base font-black">
-                    <span>TOPLAM</span>
+                    <span>{t('sales.receipt.total')}</span>
                     <span>₺{Number(selectedSale.total_amount).toLocaleString()}</span>
                  </div>
                  <div className="flex justify-between text-[10px]">
-                    <span>ÖDEME: {selectedSale.payment_method}</span>
+                    <span>{t('sales.receipt.payment')}: {selectedSale.payment_method}</span>
                  </div>
                  <div className="flex justify-between text-[10px]">
-                    <span>KASİYER: {selectedSale.user_email}</span>
+                    <span>{t('sales.receipt.cashier')}: {selectedSale.user_email}</span>
                  </div>
               </div>
 
               <div className="text-center mt-10 text-[10px]">
-                 <p>*** TESEKKUR EDERIZ ***</p>
-                 <p>Bu bir sistem çıktısıdır.</p>
+                 <p>{t('sales.receipt.footer1')}</p>
+                 <p>{t('sales.receipt.footer2')}</p>
               </div>
            </div>
          )}
@@ -697,7 +699,12 @@ export function Sales() {
 
 // İade Modalı
 function ReturnModal({ item, maxQty, onClose, onConfirm, quantity, setQuantity, reason, setReason }: any) {
-  const reasons = ['Defolu', 'Beden Uymadı', 'Müşteri Vazgeçti', 'Diğer'];
+  const reasons = [
+    t('sales.return.reasons.defective'),
+    t('sales.return.reasons.sizeMismatch'),
+    t('sales.return.reasons.changedMind'),
+    t('sales.return.reasons.other')
+  ];
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -707,30 +714,30 @@ function ReturnModal({ item, maxQty, onClose, onConfirm, quantity, setQuantity, 
         className="bg-white rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden"
       >
         <div className="p-6 bg-rose-600 text-white flex justify-between items-center">
-           <h3 className="font-black uppercase tracking-tight">Ürün İade İşlemi</h3>
+           <h3 className="font-black uppercase tracking-tight">{t('sales.return.title')}</h3>
            <button onClick={onClose} className="p-2 hover:bg-rose-700 rounded-xl transition-all"><X size={20} /></button>
         </div>
         
         <div className="p-8 space-y-6">
            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">İADE EDİLECEK ÜRÜN</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('sales.return.product')}</p>
               <p className="font-bold text-slate-800">{item.product_variants?.products?.name}</p>
               <p className="text-xs text-slate-400">{item.product_variants?.colors?.name} / {item.product_variants?.sizes?.name}</p>
            </div>
 
            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">İADE ADEDİ</label>
+                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('sales.return.quantity')}</label>
                  <input 
                    type="number" min="1" max={maxQty}
                    value={quantity}
                    onChange={(e) => setQuantity(Math.min(maxQty, Math.max(1, parseInt(e.target.value) || 1)))}
                    className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-4 text-xl font-black text-slate-800 focus:border-rose-500 outline-none transition-all"
                  />
-                 <p className="text-[9px] text-slate-400 font-bold ml-1">MAX: {maxQty} ADET</p>
+                 <p className="text-[9px] text-slate-400 font-bold ml-1">{t('sales.return.maxQty', { count: maxQty })}</p>
               </div>
               <div className="space-y-2">
-                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">İADE SEBEBİ</label>
+                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{t('sales.return.reason')}</label>
                  <select 
                    value={reason}
                    onChange={(e) => setReason(e.target.value)}
@@ -743,7 +750,7 @@ function ReturnModal({ item, maxQty, onClose, onConfirm, quantity, setQuantity, 
 
            <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100">
               <div className="flex justify-between items-center">
-                 <span className="text-[10px] font-black text-rose-600 uppercase">İADE EDİLECEK TUTAR</span>
+                 <span className="text-[10px] font-black text-rose-600 uppercase">{t('sales.return.totalReturn')}</span>
                  <span className="text-xl font-black text-rose-600">₺{(item.unit_price * quantity).toLocaleString()}</span>
               </div>
            </div>
@@ -753,13 +760,13 @@ function ReturnModal({ item, maxQty, onClose, onConfirm, quantity, setQuantity, 
                 onClick={onClose}
                 className="flex-1 py-4 text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-2xl transition-colors"
               >
-                Vazgeç
+                {t('sales.return.cancel')}
               </button>
               <button 
                 onClick={onConfirm}
                 className="flex-[2] py-4 bg-rose-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95"
               >
-                İADEYİ ONAYLA
+                {t('sales.return.confirm')}
               </button>
            </div>
         </div>
@@ -801,7 +808,7 @@ function CheckoutModal({ cart, total, onClose, onSuccess }: { cart: CartItem[], 
       const result = await saleService.processSale(payload);
       onSuccess();
     } catch (err: any) {
-      alert("Hata: " + (err.message || "Satış kaydedilemedi"));
+      alert(t('common.error') + ": " + (err.message || t('sales.return.error')));
     } finally {
       setLoading(false);
     }
@@ -817,8 +824,8 @@ function CheckoutModal({ cart, total, onClose, onSuccess }: { cart: CartItem[], 
         <div className="p-8 bg-emerald-600 text-white flex justify-between items-center relative overflow-hidden">
            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
            <div>
-             <h3 className="text-2xl font-black tracking-tight leading-none">Kasa İşlemi</h3>
-             <p className="text-xs text-emerald-100 uppercase tracking-widest font-bold mt-2 font-mono">ÖDEME SEÇENEKLERİ</p>
+             <h3 className="text-2xl font-black tracking-tight leading-none">{t('sales.checkout.title')}</h3>
+             <p className="text-xs text-emerald-100 uppercase tracking-widest font-bold mt-2 font-mono">{t('sales.checkout.options')}</p>
            </div>
            <button onClick={onClose} className="p-3 hover:bg-emerald-700/50 rounded-2xl transition-all relative z-10"><X size={24} /></button>
         </div>
@@ -826,19 +833,19 @@ function CheckoutModal({ cart, total, onClose, onSuccess }: { cart: CartItem[], 
         <div className="p-8 space-y-8">
           <div className="grid grid-cols-2 gap-4">
              <PaymentOption 
-               active={paymentMethod === 'CASH'} icon={<Banknote />} label="Nakit" amount={total} 
+               active={paymentMethod === 'CASH'} icon={<Banknote />} label={t('sales.checkout.paymentMethods.cash')} amount={total} 
                onClick={() => setPaymentMethod('CASH')}
              />
              <PaymentOption 
-               active={paymentMethod === 'CREDIT_CARD'} icon={<CreditCard />} label="Kredi Kartı" amount={total}
+               active={paymentMethod === 'CREDIT_CARD'} icon={<CreditCard />} label={t('sales.checkout.paymentMethods.card')} amount={total}
                onClick={() => setPaymentMethod('CREDIT_CARD')}
              />
              <PaymentOption 
-               active={paymentMethod === 'MAIL_ORDER'} icon={<Send />} label="Mail Order" amount={total}
+               active={paymentMethod === 'MAIL_ORDER'} icon={<Send />} label={t('sales.checkout.paymentMethods.mailOrder')} amount={total}
                onClick={() => setPaymentMethod('MAIL_ORDER')}
              />
              <PaymentOption 
-               active={paymentMethod === 'UNSPECIFIED'} icon={<CircleDollarSign />} label="Hızlı Çıkış" amount={total}
+               active={paymentMethod === 'UNSPECIFIED'} icon={<CircleDollarSign />} label={t('sales.checkout.paymentMethods.fast')} amount={total}
                onClick={() => setPaymentMethod('UNSPECIFIED')}
              />
           </div>
@@ -849,11 +856,11 @@ function CheckoutModal({ cart, total, onClose, onSuccess }: { cart: CartItem[], 
               animate={{ height: 'auto', opacity: 1 }}
               className="space-y-3"
             >
-              <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest font-mono">Müşteri Adı Soyadı / Notu (Zorunlu)</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest font-mono">{t('sales.checkout.customerInfo')}</label>
               <textarea 
                 value={customerNote}
                 onChange={(e) => setCustomerNote(e.target.value)}
-                placeholder="Örn: Ahmet Yılmaz - 0555..."
+                placeholder={t('sales.checkout.customerPlaceholder')}
                 className="w-full bg-slate-50 border-2 border-emerald-100 rounded-[24px] p-5 text-sm font-bold text-slate-800 focus:border-emerald-500 outline-none transition-all placeholder-slate-300 h-32"
               />
             </motion.div>
@@ -865,12 +872,12 @@ function CheckoutModal({ cart, total, onClose, onSuccess }: { cart: CartItem[], 
                    <UserIcon size={24} />
                 </div>
                 <div>
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1 font-mono">KASİYER</p>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1 font-mono">{t('sales.checkout.cashier')}</p>
                    <p className="text-sm font-black text-slate-800">{profile?.full_name || user?.email}</p>
                 </div>
              </div>
              <div className="text-right">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1 font-mono">TOPLAM TAHSİLAT</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1 font-mono">{t('sales.checkout.totalCollection')}</p>
                 <p className="text-2xl font-black text-emerald-600">₺{total.toLocaleString()}</p>
              </div>
           </div>
@@ -880,7 +887,7 @@ function CheckoutModal({ cart, total, onClose, onSuccess }: { cart: CartItem[], 
             onClick={handleFinish}
             className="w-full py-6 bg-slate-900 text-white rounded-[24px] font-black tracking-widest shadow-2xl hover:bg-emerald-600 transition-all active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none uppercase"
           >
-            {loading ? "İŞLEM GERÇEKLEŞTİRİLİYOR..." : "SİPARİŞİ ONAYLA VE TAMAMLA"}
+            {loading ? t('sales.checkout.processing') : t('sales.checkout.confirm')}
           </button>
         </div>
       </motion.div>
