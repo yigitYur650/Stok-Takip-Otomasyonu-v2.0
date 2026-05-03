@@ -1,49 +1,54 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../types/database.types';
 import { ISaleService } from './interfaces/IServices';
+import { db } from '../lib/db';
+import { syncService } from './SyncService';
 
 export class SaleService implements ISaleService {
   constructor(private supabase: SupabaseClient<Database>) {}
 
   /**
-   * Atomik olarak bir satış işlemi kurgular. (Direct Supabase RPC)
+   * Atomik olarak bir satış işlemi kurgular. (Offline-First & Idempotency)
    */
   async processSale(salePayload: any): Promise<any> {
-    
-    const id = window.crypto.randomUUID();
+    const id = salePayload.id || window.crypto.randomUUID();
+    const request_id = window.crypto.randomUUID();
     const created_at = new Date().toISOString();
 
     const finalizedPayload = {
       ...salePayload,
       id,
+      request_id,
       created_at,
+      version: 1,
       user_email: salePayload.user_email || 'Bilinmeyen',
       customer_note: salePayload.customer_note || '',
       payment_type: salePayload.payment_method === 'CASH' ? 'CASH' : 'CARD', 
-      discount_amount: salePayload.discount_amount || 0, // Eksik olan alan eklendi
+      discount_amount: salePayload.discount_amount || 0,
       items: salePayload.items.map((item: any) => ({
         ...item, 
-        id: window.crypto.randomUUID()
+        id: item.id || window.crypto.randomUUID()
       })),
       payments: (salePayload.payments || []).map((p: any) => ({
         ...p, 
-        id: window.crypto.randomUUID(), 
+        id: p.id || window.crypto.randomUUID(), 
         created_at: new Date().toISOString()
       }))
     };
 
-    // --- ÜRETİM ORTAMI SERVİS YAPILANDIRMASI ---
-    // Sistem genelinde Mock servis kullanımı durdurulmuş, tamamen Supabase'e geçilmiştir.
-
-    // @ts-ignore
-    const { data, error } = await this.supabase.rpc('process_sale', {
-      payload: finalizedPayload as any
+    // 1. Optimistic UI: Yerel veritabanına (Dexie) yaz
+    await db.sales.add({
+      id: finalizedPayload.id,
+      shop_id: finalizedPayload.shop_id,
+      total_amount: finalizedPayload.total_amount,
+      sale_date: finalizedPayload.created_at,
+      updated_at: finalizedPayload.created_at,
+      version: finalizedPayload.version,
+      request_id: finalizedPayload.request_id
     });
 
-    if (error) {
-      console.error("SaleService - processSale Error:", error);
-      throw error;
-    }
+    // 2. Senkronizasyon kuyruğuna ekle (Idempotency Garantili)
+    await syncService.enqueue('sales', 'INSERT', finalizedPayload);
 
     return finalizedPayload;
   }

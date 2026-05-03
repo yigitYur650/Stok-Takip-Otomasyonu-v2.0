@@ -699,6 +699,7 @@ export function Sales() {
 
 // İade Modalı
 function ReturnModal({ item, maxQty, onClose, onConfirm, quantity, setQuantity, reason, setReason }: any) {
+  const { t } = useTranslation();
   const reasons = [
     t('sales.return.reasons.defective'),
     t('sales.return.reasons.sizeMismatch'),
@@ -777,6 +778,7 @@ function ReturnModal({ item, maxQty, onClose, onConfirm, quantity, setQuantity, 
 
 // Ödeme Modalı
 function CheckoutModal({ cart, total, onClose, onSuccess }: { cart: CartItem[], total: number, onClose: () => void, onSuccess: () => void }) {
+  const { t } = useTranslation();
   const { saleService } = useServices();
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
