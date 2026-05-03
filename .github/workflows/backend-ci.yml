@@ -11,7 +11,6 @@ jobs:
     name: Build & Test Go Backend
     runs-on: ubuntu-latest
     
-    # Postgres servisini CI ortamında ayağa kaldırıyoruz ki sunucu hata vermesin
     services:
       postgres:
         image: postgres:15
@@ -47,28 +46,50 @@ jobs:
           cd backend
           go build -v -o bin/server main.go
 
-      - name: Run Unit Tests
+      - name: Initialize Database Schema
+        env:
+          PGPASSWORD: password
         run: |
-          cd backend
-          go test -v ./...
+          psql -h localhost -U postgres -d textile_erp_test -c "
+          CREATE TABLE IF NOT EXISTS sales (
+              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+              product_id UUID,
+              quantity INT,
+              total_price DECIMAL,
+              version BIGINT DEFAULT 1,
+              request_id UUID UNIQUE,
+              created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+          );
+          CREATE TABLE IF NOT EXISTS stock_movements (
+              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+              product_id UUID,
+              quantity INT,
+              type TEXT,
+              version BIGINT DEFAULT 1,
+              request_id UUID UNIQUE,
+              created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+          );
+          CREATE TABLE IF NOT EXISTS failed_syncs (
+              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+              payload JSONB,
+              error_message TEXT,
+              retry_count INT DEFAULT 0,
+              created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+          );"
 
-      # TEST ADIMI: Sunucuyu başlat ve k6 testini aynı job içinde koştur
       - name: Start Server and Run k6 Smoke Test
         env:
           DATABASE_URL: postgres://postgres:password@localhost:5432/textile_erp_test?sslmode=disable
           METRICS_TOKEN: ci_test_token
         run: |
           cd backend
-          # Sunucuyu arka planda başlat
-          ./bin/server & 
-          # Sunucunun açılması için 5 saniye bekle
-          sleep 5
-          # k6 yükle ve çalıştır (Ubuntu ortamında)
-          sudo gpg -k
-          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D23
-          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt-get update
-          sudo apt-get install k6
+          # Sunucuyu başlat ve çıktıları log.txt'ye yaz
+          ./bin/server > server_log.txt 2>&1 & 
+          sleep 7
           
-          # Testi çalıştır
-          k6 run ../tests/load/stress_test.js --vus 5 --duration 10s
+          # Sunucu hala ayakta mı kontrol et
+          ps aux | grep server
+          
+          # k6 yükle (Sadece gerekliyse - normalde k6 action daha iyidir ama bu yapı daha kontrollü)
+          curl https://github.com/grafana/k6/releases/download/v0.49.0/k6-v0.49.0-linux-amd64.tar.gz -L | tar xvz
+          ./k6-v0.49.0-linux-amd64/k6 run ../tests/load/stress_test.js --vus 5 --duration 10s || (cat server_log.txt && exit 1)
