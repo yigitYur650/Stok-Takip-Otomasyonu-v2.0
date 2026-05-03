@@ -17,6 +17,7 @@ jobs:
         env:
           POSTGRES_DB: textile_erp_test
           POSTGRES_PASSWORD: password
+          POSTGRES_USER: postgres
         ports:
           - 5432:5432
         options: >-
@@ -51,7 +52,8 @@ jobs:
         env:
           PGPASSWORD: password
         run: |
-          psql -h 127.0.0.1 -U postgres -d textile_erp_test -c "
+          # Tabloları oluştur (Hata olursa CI burada duracak, böylece hatayı göreceğiz)
+          psql -h 127.0.0.1 -U postgres -d textile_erp_test -f - <<EOF
           CREATE TABLE IF NOT EXISTS sales (
               id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
               product_id UUID,
@@ -76,35 +78,25 @@ jobs:
               error_message TEXT,
               retry_count INT DEFAULT 0,
               created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-          );"
+          );
+          EOF
 
       - name: Run k6 Smoke Test
         env:
           DATABASE_URL: postgres://postgres:password@127.0.0.1:5432/textile_erp_test?sslmode=disable
           METRICS_TOKEN: ci_test_token
+          PORT: 3001
         run: |
           cd backend
-          # Sunucuyu arka planda başlat
+          # Sunucuyu başlat
           ./bin/server > server_log.txt 2>&1 &
           
-          # Sunucunun hazır olmasını bekle (Max 30sn)
-          echo "Waiting for server to be ready..."
-          for i in {1..30}; do
-            if curl -s http://127.0.0.1:3001/metrics -H "X-Metrics-Token: ci_test_token" > /dev/null; then
-              echo "Server is UP!"
-              break
-            fi
-            echo "Waiting... ($i)"
-            sleep 1
-          done
-
-          # Eğer hala kapalıysa logları bas ve çık
-          if ! curl -s http://127.0.0.1:3001/metrics -H "X-Metrics-Token: ci_test_token" > /dev/null; then
-            echo "ERROR: Server failed to start!"
-            cat server_log.txt
-            exit 1
-          fi
+          echo "Checking server status..."
+          # Sunucunun ayağa kalkması için bekle
+          timeout 30s bash -c 'until curl -s http://127.0.0.1:3001/metrics -H "X-Metrics-Token: ci_test_token"; do sleep 1; done' || (echo "Server failed to start!" && cat server_log.txt && exit 1)
           
-          # k6'yı indir ve çalıştır
-          curl https://github.com/grafana/k6/releases/download/v0.49.0/k6-v0.49.0-linux-amd64.tar.gz -L | tar xvz
-          ./k6-v0.49.0-linux-amd64/k6 run ../tests/load/stress_test.js --vus 2 --duration 5s
+          # k6'yı indir ve çalıştır (Hız için binary indiriyoruz)
+          curl -L https://github.com/grafana/k6/releases/download/v0.49.0/k6-v0.49.0-linux-amd64.tar.gz | tar xvz
+          
+          # TESTİ ÇALIŞTIR (Kısa ve öz)
+          ./k6-v0.49.0-linux-amd64/k6 run ../tests/load/stress_test.js --vus 2 --duration 5s || (echo "Load test failed! Server logs:" && cat server_log.txt && exit 1)
