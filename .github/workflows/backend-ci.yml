@@ -25,6 +25,15 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout Repository
@@ -34,7 +43,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-          check-latest: true
           cache-dependency-path: backend/go.sum
 
       - name: Install Dependencies
@@ -52,7 +60,6 @@ jobs:
         env:
           PGPASSWORD: password
         run: |
-          # Tabloları oluştur (Hata olursa CI burada duracak, böylece hatayı göreceğiz)
           psql -h 127.0.0.1 -U postgres -d textile_erp_test -f - <<EOF
           CREATE TABLE IF NOT EXISTS sales (
               id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -81,9 +88,13 @@ jobs:
           );
           EOF
 
+      - name: Set up k6
+        uses: grafana/setup-k6-action@v1
+
       - name: Run k6 Smoke Test
         env:
           DATABASE_URL: postgres://postgres:password@127.0.0.1:5432/textile_erp_test?sslmode=disable
+          REDIS_URL: redis://127.0.0.1:6379
           METRICS_TOKEN: ci_test_token
           PORT: 3001
         run: |
@@ -91,12 +102,8 @@ jobs:
           # Sunucuyu başlat
           ./bin/server > server_log.txt 2>&1 &
           
-          echo "Checking server status..."
-          # Sunucunun ayağa kalkması için bekle
-          timeout 30s bash -c 'until curl -s http://127.0.0.1:3001/metrics -H "X-Metrics-Token: ci_test_token"; do sleep 1; done' || (echo "Server failed to start!" && cat server_log.txt && exit 1)
+          echo "Waiting for server to be ready on port 3001..."
+          timeout 30s bash -c 'until curl -s http://127.0.0.1:3001/metrics -H "X-Metrics-Token: ci_test_token"; do sleep 1; done' || (echo "ERROR: Server failed to start! Logs:" && cat server_log.txt && exit 1)
           
-          # k6'yı indir ve çalıştır (Hız için binary indiriyoruz)
-          curl -L https://github.com/grafana/k6/releases/download/v0.49.0/k6-v0.49.0-linux-amd64.tar.gz | tar xvz
-          
-          # TESTİ ÇALIŞTIR (Kısa ve öz)
-          ./k6-v0.49.0-linux-amd64/k6 run ../tests/load/stress_test.js --vus 2 --duration 5s || (echo "Load test failed! Server logs:" && cat server_log.txt && exit 1)
+          echo "Server is UP! Running k6..."
+          k6 run ../tests/load/stress_test.js --vus 2 --duration 10s || (echo "Load test failed! Server logs:" && cat server_log.txt && exit 1)
